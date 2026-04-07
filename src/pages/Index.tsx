@@ -1,16 +1,51 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useSubscription } from '@/hooks/useSubscription';
+import { TrialWelcome } from '@/components/TrialWelcome';
+import { BottomNav } from '@/components/BottomNav';
+import { HomePage } from '@/pages/HomePage';
+import { ListsPage } from '@/pages/ListsPage';
+import { StockPage } from '@/pages/StockPage';
+import { SavingsPage } from '@/pages/SavingsPage';
+import { HistoryPage } from '@/pages/HistoryPage';
+import { ReportsPage } from '@/pages/ReportsPage';
+import { TabId } from '@/types';
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
+  const { status, daysLeft, startTrial } = useSubscription();
+  const [activeTab, setActiveTab] = useState<TabId>('home');
+
+  if (status === 'not_started') {
+    return <TrialWelcome onStartTrial={startTrial} />;
+  }
+
+  const renderPage = () => {
+    switch (activeTab) {
+      case 'home': return <HomePage daysLeft={daysLeft} isTrial={status === 'trial'} onNavigate={setActiveTab} />;
+      case 'lists': return <ListsPage />;
+      case 'stock': return <StockPage />;
+      case 'savings': return <SavingsPage />;
+      case 'history': return <HistoryPage />;
+      case 'reports': return <ReportsPage />;
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="min-h-screen bg-background max-w-lg mx-auto relative">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -10 }}
+          transition={{ duration: 0.15 }}
+        >
+          {renderPage()}
+        </motion.div>
+      </AnimatePresence>
+      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;

@@ -26,7 +26,7 @@ const Index = () => {
       case 'lists': return <ListsPage />;
       case 'stock': return <StockPage />;
       case 'savings': return <SavingsPage />;
-      case 'history': return <HistoryPage />;
+      case 'history': return <HistoryPage onNavigateToScanner={() => setActiveTab('scanner')} />;
       case 'reports': return <ReportsPage />;
       case 'scanner': return <ScannerPage />;
     }

@@ -9,6 +9,7 @@ import { StockPage } from '@/pages/StockPage';
 import { SavingsPage } from '@/pages/SavingsPage';
 import { HistoryPage } from '@/pages/HistoryPage';
 import { ReportsPage } from '@/pages/ReportsPage';
+import { ScannerPage } from '@/pages/ScannerPage';
 import { TabId } from '@/types';
 
 const Index = () => {
@@ -27,6 +28,7 @@ const Index = () => {
       case 'savings': return <SavingsPage />;
       case 'history': return <HistoryPage />;
       case 'reports': return <ReportsPage />;
+      case 'scanner': return <ScannerPage />;
     }
   };
 

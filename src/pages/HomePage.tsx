@@ -22,7 +22,7 @@ const statsData = [
 const quickActions = [
   { label: 'Nova Lista', icon: ListPlus, tab: 'lists' as TabId },
   { label: 'Estoque', icon: Package, tab: 'stock' as TabId },
-  { label: 'Scanner', icon: ScanLine, tab: 'home' as TabId },
+  { label: 'Scanner', icon: ScanLine, tab: 'scanner' as TabId },
   { label: 'Família', icon: Users, tab: 'home' as TabId },
   { label: 'Histórico', icon: Clock, tab: 'history' as TabId },
   { label: 'Economizar', icon: PiggyBank, tab: 'savings' as TabId },
@@ -50,7 +50,7 @@ export function HomePage({ daysLeft, isTrial, onNavigate }: HomePageProps) {
         title="Olá, Usuário 👋"
         subtitle="Seu resumo de hoje"
         action={
-          <button className="h-9 px-3 rounded-lg gradient-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5">
+          <button onClick={() => onNavigate('scanner')} className="h-9 px-3 rounded-lg gradient-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5">
             <ScanLine className="w-4 h-4" /> Escanear
           </button>
         }

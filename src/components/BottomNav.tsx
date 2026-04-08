@@ -1,4 +1,4 @@
-import { Home, ListChecks, Package, PiggyBank, Clock, BarChart3 } from 'lucide-react';
+import { Home, ShoppingCart, Package, DollarSign, Clock, BarChart3 } from 'lucide-react';
 import { TabId } from '@/types';
 import { motion } from 'framer-motion';
 
@@ -9,16 +9,16 @@ interface BottomNavProps {
 
 const tabs: { id: TabId; label: string; icon: typeof Home }[] = [
   { id: 'home', label: 'Início', icon: Home },
-  { id: 'lists', label: 'Listas', icon: ListChecks },
+  { id: 'lists', label: 'Listas', icon: ShoppingCart },
   { id: 'stock', label: 'Estoque', icon: Package },
-  { id: 'savings', label: 'Economizar', icon: PiggyBank },
+  { id: 'savings', label: 'Economizar', icon: DollarSign },
   { id: 'history', label: 'Histórico', icon: Clock },
   { id: 'reports', label: 'Relatórios', icon: BarChart3 },
 ];
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border safe-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border safe-bottom">
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-1">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;

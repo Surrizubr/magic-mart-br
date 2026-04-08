@@ -1,8 +1,6 @@
 import { motion } from 'framer-motion';
-import { PageHeader } from '@/components/PageHeader';
-import { TrialBanner } from '@/components/TrialBanner';
-import { mockLists, mockStock } from '@/data/mockData';
-import { ScanLine, ListPlus, Package, Users, Clock, PiggyBank, AlertTriangle, Minus, Plus } from 'lucide-react';
+import { mockLists, mockStock, mockHistory } from '@/data/mockData';
+import { Plus, ShoppingCart, ScanLine, Share2, Calendar, AlertTriangle, ArrowRight, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { TabId } from '@/types';
 
@@ -11,22 +9,6 @@ interface HomePageProps {
   isTrial: boolean;
   onNavigate: (tab: TabId) => void;
 }
-
-const statsData = [
-  { label: 'Gasto do mês', value: 'R$ 187,50', icon: '💰' },
-  { label: 'Itens estoque', value: '6', icon: '📦' },
-  { label: 'Listas ativas', value: '2', icon: '📋' },
-  { label: 'Variação mês', value: '-8%', icon: '📈' },
-];
-
-const quickActions = [
-  { label: 'Nova Lista', icon: ListPlus, tab: 'lists' as TabId },
-  { label: 'Estoque', icon: Package, tab: 'stock' as TabId },
-  { label: 'Scanner', icon: ScanLine, tab: 'scanner' as TabId },
-  { label: 'Família', icon: Users, tab: 'home' as TabId },
-  { label: 'Histórico', icon: Clock, tab: 'history' as TabId },
-  { label: 'Economizar', icon: PiggyBank, tab: 'savings' as TabId },
-];
 
 const container = {
   hidden: { opacity: 0 },
@@ -40,128 +22,143 @@ const item = {
 export function HomePage({ daysLeft, isTrial, onNavigate }: HomePageProps) {
   const criticalStock = mockStock.filter(s => s.status === 'critical' || s.status === 'low');
   const activeLists = mockLists.filter(l => l.status === 'active');
-  const [quantities, setQuantities] = useState<Record<string, number>>(
-    Object.fromEntries(mockStock.map(s => [s.id, s.quantity]))
-  );
+  const totalMonth = mockHistory.reduce((sum, h) => sum + h.total_price, 0);
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
     <div className="pb-20">
-      <PageHeader
-        title="Olá, Usuário 👋"
-        subtitle="Seu resumo de hoje"
-        action={
-          <button onClick={() => onNavigate('scanner')} className="h-9 px-3 rounded-lg gradient-primary text-primary-foreground text-sm font-medium flex items-center gap-1.5">
-            <ScanLine className="w-4 h-4" /> Escanear
-          </button>
-        }
-      />
+      {/* Header */}
+      <motion.header
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="px-4 pt-4 pb-3"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center">
+            <span className="text-primary-foreground text-lg">🌿</span>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Olá, Usuário 👋</p>
+            <h1 className="text-xl font-bold text-foreground">Magicmart AI</h1>
+            <p className="text-xs text-muted-foreground capitalize">{dateStr}</p>
+          </div>
+        </div>
+      </motion.header>
 
-      <motion.div variants={container} initial="hidden" animate="show" className="p-4 space-y-5">
-        {/* Stats */}
-        <motion.div variants={item} className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4">
-          {statsData.map((s, i) => (
-            <div key={i} className="min-w-[130px] bg-card rounded-lg shadow-card p-3 shrink-0">
-              <span className="text-lg">{s.icon}</span>
-              <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
-              <p className="text-base font-bold text-card-foreground">{s.value}</p>
-            </div>
-          ))}
+      <motion.div variants={container} initial="hidden" animate="show" className="px-4 space-y-5">
+        {/* Stats Row */}
+        <motion.div variants={item} className="flex gap-3">
+          <div className="flex-1 bg-card rounded-xl border border-border p-3 text-center">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Estoque</p>
+            <p className="text-2xl font-bold text-foreground">{mockStock.length}</p>
+            <p className="text-[10px] text-muted-foreground uppercase">Itens</p>
+          </div>
+          <div className="flex-1 bg-card rounded-xl border border-primary/30 p-3 text-center">
+            <p className="text-[10px] font-semibold text-primary uppercase tracking-wider">Listas</p>
+            <p className="text-2xl font-bold text-primary">{activeLists.length}</p>
+            <p className="text-[10px] text-primary uppercase">Ativas</p>
+          </div>
+          <div className="flex-1 bg-card rounded-xl border border-border p-3 text-center">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Histórico</p>
+            <p className="text-xl font-bold text-foreground">R$ {totalMonth.toFixed(2)}</p>
+            <p className="text-[10px] text-muted-foreground uppercase">Mês Atual</p>
+          </div>
         </motion.div>
 
-        {/* Quick Actions */}
+        {/* Action Cards - 2x2 grid */}
+        <motion.div variants={item} className="grid grid-cols-5 gap-3">
+          {/* Nova Lista - larger */}
+          <button
+            onClick={() => onNavigate('lists')}
+            className="col-span-2 gradient-primary rounded-xl p-4 text-left"
+          >
+            <Plus className="w-6 h-6 text-primary-foreground mb-4" />
+            <p className="text-sm font-bold text-primary-foreground">Nova Lista</p>
+            <p className="text-xs text-primary-foreground/80">Criar lista de compras</p>
+          </button>
+          {/* Fazer Mercado */}
+          <button
+            onClick={() => onNavigate('lists')}
+            className="col-span-3 bg-card rounded-xl border border-border p-4 text-left"
+          >
+            <ShoppingCart className="w-6 h-6 text-primary mb-4" />
+            <p className="text-sm font-bold text-foreground">Fazer Mercado</p>
+            <p className="text-xs text-muted-foreground">Adicionar produtos na cesta</p>
+          </button>
+        </motion.div>
+
+        <motion.div variants={item} className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => onNavigate('scanner')}
+            className="bg-card rounded-xl border border-border p-4 text-left"
+          >
+            <ScanLine className="w-6 h-6 text-muted-foreground mb-2" />
+            <p className="text-sm font-bold text-foreground">Escanear</p>
+            <p className="text-xs text-muted-foreground">Nota fiscal</p>
+          </button>
+          <button
+            onClick={() => {}}
+            className="bg-card rounded-xl border border-border p-4 text-left"
+          >
+            <Share2 className="w-6 h-6 text-primary mb-2" />
+            <p className="text-sm font-bold text-foreground">Compartilhar</p>
+            <p className="text-xs text-muted-foreground">Listas ativas</p>
+          </button>
+        </motion.div>
+
+        {/* Dias mais baratos banner */}
         <motion.div variants={item}>
-          <h2 className="text-sm font-semibold text-foreground mb-2">Ações Rápidas</h2>
-          <div className="grid grid-cols-3 gap-2">
-            {quickActions.map((a, i) => (
-              <button
-                key={i}
-                onClick={() => onNavigate(a.tab)}
-                className="bg-card rounded-lg shadow-card p-3 flex flex-col items-center gap-1.5 hover:shadow-elevated transition-shadow"
-              >
-                <a.icon className="w-5 h-5 text-primary" />
-                <span className="text-xs font-medium text-card-foreground">{a.label}</span>
-              </button>
-            ))}
-          </div>
+          <button
+            onClick={() => onNavigate('savings')}
+            className="w-full bg-accent rounded-xl p-4 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-primary" />
+              <span className="text-sm font-semibold text-primary">Dias de compras mais baratos</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-primary" />
+          </button>
         </motion.div>
 
         {/* Alerts */}
         {criticalStock.length > 0 && (
           <motion.div variants={item}>
-            <h2 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
-              <AlertTriangle className="w-4 h-4 text-warning" /> Alertas de Reposição
-            </h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">Alertas</h2>
+              <div className="flex items-center gap-2">
+                <button className="text-xs text-muted-foreground">Limpar</button>
+                <button className="text-xs text-primary font-medium flex items-center gap-0.5">
+                  Ver todas <ArrowRight className="w-3 h-3" />
+                </button>
+                <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                  {criticalStock.length}
+                </span>
+              </div>
+            </div>
             <div className="space-y-2">
-              {criticalStock.map(s => (
-                <div key={s.id} className="bg-card rounded-lg shadow-card p-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-card-foreground">{s.product_name}</p>
-                    <p className="text-xs text-muted-foreground">{s.category} · {s.quantity} {s.unit}</p>
+              {criticalStock.map(s => {
+                const daysLeft = s.daily_consumption_rate > 0 ? Math.ceil(s.quantity / s.daily_consumption_rate) : 99;
+                return (
+                  <div key={s.id} className="bg-card rounded-xl border border-border p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-warning/10 flex items-center justify-center shrink-0 mt-0.5">
+                        <AlertTriangle className="w-4 h-4 text-warning" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-foreground uppercase">{s.product_name}</p>
+                        <p className="text-xs font-semibold text-warning">~{daysLeft} dias restantes</p>
+                        <p className="text-xs text-muted-foreground">
+                          Estoque: {s.quantity} {s.unit} · Última compra: 03/04/2026
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                    s.status === 'critical' ? 'bg-destructive/10 text-destructive' : 'bg-warning-bg text-warning-foreground'
-                  }`}>
-                    {s.status === 'critical' ? 'Crítico' : 'Baixo'}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
         )}
-
-        {/* Quick Stock */}
-        <motion.div variants={item}>
-          <h2 className="text-sm font-semibold text-foreground mb-2">Estoque Rápido</h2>
-          <div className="space-y-2">
-            {criticalStock.slice(0, 3).map(s => (
-              <div key={s.id} className="bg-card rounded-lg shadow-card p-3 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-card-foreground">{s.product_name}</p>
-                  <p className="text-xs text-muted-foreground">Mín: {s.min_quantity} {s.unit}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setQuantities(q => ({ ...q, [s.id]: Math.max(0, (q[s.id] || 0) - 1) }))}
-                    className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center"
-                  >
-                    <Minus className="w-3.5 h-3.5 text-secondary-foreground" />
-                  </button>
-                  <span className="text-sm font-bold text-foreground w-6 text-center">{quantities[s.id]}</span>
-                  <button
-                    onClick={() => setQuantities(q => ({ ...q, [s.id]: (q[s.id] || 0) + 1 }))}
-                    className="w-7 h-7 rounded-full bg-primary flex items-center justify-center"
-                  >
-                    <Plus className="w-3.5 h-3.5 text-primary-foreground" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Trial Banner */}
-        {isTrial && <TrialBanner daysLeft={daysLeft} />}
-
-        {/* Active Lists */}
-        <motion.div variants={item}>
-          <h2 className="text-sm font-semibold text-foreground mb-2">Listas Ativas</h2>
-          <div className="space-y-2">
-            {activeLists.map(l => (
-              <button key={l.id} onClick={() => onNavigate('lists')} className="w-full bg-card rounded-lg shadow-card p-3 text-left">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-sm font-medium text-card-foreground">{l.name}</p>
-                  <span className="text-xs text-muted-foreground">{l.checked_items}/{l.total_items}</span>
-                </div>
-                <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full gradient-primary transition-all"
-                    style={{ width: `${l.total_items ? (l.checked_items / l.total_items) * 100 : 0}%` }}
-                  />
-                </div>
-              </button>
-            ))}
-          </div>
-        </motion.div>
       </motion.div>
     </div>
   );

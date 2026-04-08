@@ -1,9 +1,14 @@
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { mockHistory } from '@/data/mockData';
-import { MapPin } from 'lucide-react';
+import { MapPin, ScanLine } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-export function HistoryPage() {
+interface HistoryPageProps {
+  onNavigateToScanner?: () => void;
+}
+
+export function HistoryPage({ onNavigateToScanner }: HistoryPageProps) {
   const totalMonth = mockHistory.reduce((sum, h) => sum + h.total_price, 0);
 
   // Group by date
@@ -14,7 +19,17 @@ export function HistoryPage() {
 
   return (
     <div className="pb-20">
-      <PageHeader title="Histórico" subtitle="Abril 2026" />
+      <PageHeader
+        title="Histórico"
+        subtitle="Abril 2026"
+        action={
+          onNavigateToScanner ? (
+            <Button size="sm" onClick={onNavigateToScanner} className="gradient-primary text-primary-foreground border-0">
+              <ScanLine className="w-4 h-4 mr-1" /> Scanner Cupom
+            </Button>
+          ) : undefined
+        }
+      />
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-4 space-y-4">
         {/* Total */}

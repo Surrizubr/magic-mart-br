@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
-import { mockLists } from '@/data/mockData';
+import { mockLists, mockStock } from '@/data/mockData';
 import { Plus, CheckCircle2, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ShoppingList } from '@/types';
+import { ShoppingList, ShoppingListItem, StockItem } from '@/types';
+import { ListDetailPage } from './ListDetailPage';
+import { toast } from 'sonner';
 
 type Filter = 'active' | 'completed' | 'archived';
 
@@ -13,6 +15,7 @@ export function ListsPage() {
   const [showNewList, setShowNewList] = useState(false);
   const [newName, setNewName] = useState('');
   const [lists, setLists] = useState<ShoppingList[]>(mockLists);
+  const [selectedList, setSelectedList] = useState<ShoppingList | null>(null);
 
   const filtered = lists.filter(l => {
     if (filter === 'active') return l.status === 'active';
@@ -31,6 +34,68 @@ export function ListsPage() {
     setNewName('');
     setShowNewList(false);
   };
+
+  const handleFinishShopping = (updatedList: ShoppingList, checkedItems: ShoppingListItem[]) => {
+    // Update the list (remove checked items)
+    setLists(prev => prev.map(l => l.id === updatedList.id ? updatedList : l));
+
+    // Save checked items to stock via localStorage
+    const existingStock: StockItem[] = JSON.parse(localStorage.getItem('stock_items') || '[]');
+    checkedItems.forEach(item => {
+      const existing = existingStock.find(s => s.product_name.toLowerCase() === item.product_name.toLowerCase());
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        existingStock.push({
+          id: `stock_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          product_name: item.product_name,
+          category: item.category,
+          quantity: item.quantity,
+          unit: item.unit,
+          min_quantity: 1,
+          daily_consumption_rate: 0.1,
+          status: 'ok',
+          last_price: item.estimated_price || item.actual_price,
+        });
+      }
+    });
+    localStorage.setItem('stock_items', JSON.stringify(existingStock));
+
+    // Save to history
+    const history = JSON.parse(localStorage.getItem('purchase_history') || '[]');
+    checkedItems.forEach(item => {
+      history.push({
+        id: `h_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        product_name: item.product_name,
+        category: item.category,
+        quantity: item.quantity,
+        price: item.actual_price || item.estimated_price,
+        total_price: (item.actual_price || item.estimated_price) * item.quantity,
+        store_name: 'Compra manual',
+        purchase_date: new Date().toISOString().slice(0, 10),
+        list_id: updatedList.id,
+      });
+    });
+    localStorage.setItem('purchase_history', JSON.stringify(history));
+
+    setSelectedList(null);
+  };
+
+  const handleUpdateList = (updatedList: ShoppingList) => {
+    setLists(prev => prev.map(l => l.id === updatedList.id ? updatedList : l));
+  };
+
+  if (selectedList) {
+    const current = lists.find(l => l.id === selectedList.id) || selectedList;
+    return (
+      <ListDetailPage
+        list={current}
+        onBack={() => setSelectedList(null)}
+        onUpdateList={handleUpdateList}
+        onFinishShopping={handleFinishShopping}
+      />
+    );
+  }
 
   const filters: { id: Filter; label: string }[] = [
     { id: 'active', label: 'Ativas' },
@@ -107,7 +172,8 @@ export function ListsPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="bg-card rounded-lg shadow-card p-4"
+              onClick={() => setSelectedList(l)}
+              className="bg-card rounded-lg shadow-card p-4 cursor-pointer hover:shadow-elevated transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">

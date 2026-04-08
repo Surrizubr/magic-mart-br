@@ -2,113 +2,148 @@ import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { monthlySpending, categorySpending, mockHistory } from '@/data/mockData';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { TrendingUp, BarChart3, ShoppingCart, Clock, Calendar } from 'lucide-react';
+
+const CATEGORY_COLORS = [
+  'hsl(152, 60%, 42%)',  // Alimentos - green
+  'hsl(38, 90%, 50%)',   // Carnes - orange
+  'hsl(210, 70%, 50%)',  // Limpeza - blue
+  'hsl(340, 60%, 55%)',  // Laticínios - pink
+  'hsl(270, 50%, 55%)',  // Higiene - purple
+  'hsl(0, 70%, 50%)',    // Bebidas - red
+  'hsl(190, 70%, 45%)',  // Hortifruti - teal
+  'hsl(25, 80%, 55%)',   // Padaria - dark orange
+  'hsl(160, 50%, 50%)',  // Outros - mint
+];
 
 export function ReportsPage() {
-  const currentMonth = 187.50;
-  const lastMonth = 530;
-  const variation = ((currentMonth - lastMonth) / lastMonth * 100).toFixed(1);
+  const currentMonth = mockHistory.reduce((sum, h) => sum + h.total_price, 0);
 
-  // Top products
   const productCounts = mockHistory.reduce<Record<string, number>>((acc, h) => {
     acc[h.product_name] = (acc[h.product_name] || 0) + h.quantity;
     return acc;
   }, {});
   const topProducts = Object.entries(productCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-  // Top stores
-  const storeCounts = mockHistory.reduce<Record<string, number>>((acc, h) => {
+  const storeVisits = mockHistory.reduce<Record<string, number>>((acc, h) => {
     acc[h.store_name] = (acc[h.store_name] || 0) + 1;
     return acc;
   }, {});
-  const topStores = Object.entries(storeCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const totalVisits = Object.values(storeVisits).reduce((a, b) => a + b, 0);
+
+  const enrichedCategories = categorySpending.map((c, i) => ({
+    ...c,
+    fill: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
+    percent: ((c.value / categorySpending.reduce((s, x) => s + x.value, 0)) * 100).toFixed(1),
+  }));
 
   return (
     <div className="pb-20">
-      <PageHeader title="Relatórios" subtitle="Abril 2026" />
+      <PageHeader
+        title="Relatórios"
+        subtitle="Análise de consumo"
+        action={
+          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary text-primary text-xs font-medium">
+            <Calendar className="w-3.5 h-3.5" /> Abr 2026
+          </button>
+        }
+      />
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-4 space-y-5">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-4 space-y-4">
         {/* Summary Cards */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-card rounded-lg shadow-card p-3 text-center">
-            <p className="text-xs text-muted-foreground">Gasto do mês</p>
-            <p className="text-lg font-bold text-primary">R$ {currentMonth.toFixed(2)}</p>
+          <div className="bg-card rounded-xl border border-border p-4">
+            <TrendingUp className="w-5 h-5 text-primary mb-2" />
+            <p className="text-xl font-bold text-foreground">R$ {currentMonth.toFixed(2)}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Este Mês</p>
           </div>
-          <div className="bg-card rounded-lg shadow-card p-3 text-center">
-            <p className="text-xs text-muted-foreground">vs. mês anterior</p>
-            <p className={`text-lg font-bold ${Number(variation) < 0 ? 'text-primary' : 'text-destructive'}`}>{variation}%</p>
+          <div className="bg-card rounded-xl border border-border p-4">
+            <BarChart3 className="w-5 h-5 text-primary mb-2" />
+            <p className="text-xl font-bold text-foreground">R$ {currentMonth.toFixed(2)}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Média/Mês</p>
+          </div>
+          <div className="bg-card rounded-xl border border-border p-4">
+            <ShoppingCart className="w-5 h-5 text-primary mb-2" />
+            <p className="text-xl font-bold text-foreground">{totalVisits}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Idas ao Mercado</p>
+            <p className="text-[10px] text-primary font-medium mt-0.5">ver detalhes →</p>
+          </div>
+          <div className="bg-card rounded-xl border border-border p-4">
+            <Clock className="w-5 h-5 text-muted-foreground mb-2" />
+            <p className="text-xl font-bold text-foreground">--</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Inflação Estimada</p>
           </div>
         </div>
 
-        {/* Bar Chart */}
-        <div className="bg-card rounded-lg shadow-card p-4">
-          <h3 className="text-sm font-semibold text-card-foreground mb-3">Gastos por mês</h3>
-          <ResponsiveContainer width="100%" height={180}>
+        {/* Monthly Evolution Bar Chart */}
+        <div className="bg-card rounded-xl border border-border p-4">
+          <h3 className="text-sm font-bold text-foreground mb-1">Evolução Mensal</h3>
+          <p className="text-xs text-muted-foreground mb-3">Últimos {monthlySpending.length} meses</p>
+          <ResponsiveContainer width="100%" height={200}>
             <BarChart data={monthlySpending}>
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(160,10%,45%)' }} axisLine={false} tickLine={false} />
-              <YAxis hide />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(160,10%,45%)' }} axisLine={true} tickLine={false} />
+              <YAxis
+                tick={{ fontSize: 10, fill: 'hsl(160,10%,45%)' }}
+                axisLine={true}
+                tickLine={false}
+                tickFormatter={(v) => `R$${v}`}
+              />
               <Tooltip
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                 formatter={(v: number) => [`R$ ${v}`, 'Gasto']}
               />
-              <Bar dataKey="value" radius={[6, 6, 0, 0]} fill="hsl(152, 60%, 42%)" />
+              <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(152, 60%, 42%)" />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Pie Chart */}
-        <div className="bg-card rounded-lg shadow-card p-4">
-          <h3 className="text-sm font-semibold text-card-foreground mb-3">Por categoria</h3>
-          <ResponsiveContainer width="100%" height={180}>
+        {/* Donut Chart */}
+        <div className="bg-card rounded-xl border border-border p-4">
+          <h3 className="text-sm font-bold text-foreground mb-4">Gastos por Categoria</h3>
+          <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie
-                data={categorySpending}
+                data={enrichedCategories}
                 cx="50%"
                 cy="50%"
-                innerRadius={45}
-                outerRadius={75}
-                paddingAngle={3}
+                innerRadius={55}
+                outerRadius={85}
+                paddingAngle={2}
                 dataKey="value"
               >
-                {categorySpending.map((entry, i) => (
+                {enrichedCategories.map((entry, i) => (
                   <Cell key={i} fill={entry.fill} />
                 ))}
               </Pie>
               <Tooltip formatter={(v: number) => [`R$ ${v.toFixed(2)}`, '']} />
             </PieChart>
           </ResponsiveContainer>
-          <div className="flex flex-wrap gap-2 mt-2 justify-center">
-            {categorySpending.map(c => (
-              <div key={c.name} className="flex items-center gap-1">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: c.fill }} />
-                <span className="text-[10px] text-muted-foreground">{c.name}</span>
+          <div className="mt-4 space-y-2">
+            {enrichedCategories.map(c => (
+              <div key={c.name} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: c.fill }} />
+                  <span className="text-sm text-foreground">{c.name}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-bold text-foreground">{c.percent}%</span>
+                  <span className="text-sm text-muted-foreground">R$ {c.value.toFixed(2)}</span>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Rankings */}
-        <div className="bg-card rounded-lg shadow-card p-4">
-          <h3 className="text-sm font-semibold text-card-foreground mb-3">Mais comprados</h3>
+        {/* Top Products */}
+        <div className="bg-card rounded-xl border border-border p-4">
+          <h3 className="text-sm font-bold text-foreground mb-3">Mais Comprados</h3>
           {topProducts.map(([name, count], i) => (
-            <div key={name} className="flex items-center justify-between py-1.5">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-primary w-4">{i + 1}</span>
-                <span className="text-sm text-card-foreground">{name}</span>
+            <div key={name} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold text-primary bg-accent w-6 h-6 rounded flex items-center justify-center">{i + 1}</span>
+                <span className="text-sm font-medium text-foreground uppercase">{name}</span>
               </div>
-              <span className="text-xs text-muted-foreground">{count}×</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="bg-card rounded-lg shadow-card p-4">
-          <h3 className="text-sm font-semibold text-card-foreground mb-3">Lojas mais visitadas</h3>
-          {topStores.map(([name, count], i) => (
-            <div key={name} className="flex items-center justify-between py-1.5">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-primary w-4">{i + 1}</span>
-                <span className="text-sm text-card-foreground">{name}</span>
-              </div>
-              <span className="text-xs text-muted-foreground">{count} visita(s)</span>
+              <span className="text-sm font-medium text-muted-foreground">{count}x</span>
             </div>
           ))}
         </div>

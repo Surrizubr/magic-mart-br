@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ShoppingList, ShoppingListItem } from '@/types';
-import { ArrowLeft, Plus, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Plus, ShoppingCart, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ListDetailPageProps {
@@ -21,6 +21,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
   const [newQty, setNewQty] = useState('1');
   const [newUnit, setNewUnit] = useState('un');
   const [newPrice, setNewPrice] = useState('');
+  const [shoppingMode, setShoppingMode] = useState(false);
 
   // Auto-persist items on every change
   useEffect(() => {
@@ -34,12 +35,14 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
   }, [items]);
 
   const sorted = useMemo(() => {
+    if (!shoppingMode) return items;
     const unchecked = items.filter(i => !i.is_checked);
     const checked = items.filter(i => i.is_checked);
     return [...unchecked, ...checked];
-  }, [items]);
+  }, [items, shoppingMode]);
 
   const toggleItem = (id: string) => {
+    if (!shoppingMode) return;
     setItems(prev => prev.map(i => i.id === id ? { ...i, is_checked: !i.is_checked } : i));
   };
 
@@ -63,18 +66,51 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
     setShowAddItem(false);
   };
 
-  const handleFinish = () => {
-    const updatedList: ShoppingList = {
-      ...list,
-      items,
-      total_items: items.length,
-      checked_items: items.filter(i => i.is_checked).length,
-      status: 'active',
-    };
+  const handleConcluir = () => {
+    // First click: enter shopping mode
+    setShoppingMode(true);
+    toast.info('Selecione os itens comprados e clique em "Encerrar Compras".');
+  };
 
-    onUpdateList(updatedList);
-    toast.success('Lista salva com sucesso!');
-    onBack();
+  const handleEncerrar = () => {
+    const checkedItems = items.filter(i => i.is_checked);
+    const uncheckedItems = items.filter(i => !i.is_checked);
+
+    if (checkedItems.length === 0) {
+      toast.warning('Selecione pelo menos um item antes de encerrar.');
+      return;
+    }
+
+    // Send checked items to stock/history
+    onFinishShopping(list, checkedItems);
+
+    if (uncheckedItems.length === 0) {
+      // All items checked → delete list (set empty + notify parent)
+      const updatedList: ShoppingList = {
+        ...list,
+        items: [],
+        total_items: 0,
+        checked_items: 0,
+        status: 'completed',
+      };
+      onUpdateList(updatedList);
+      toast.success('Compras encerradas! Lista concluída.');
+      onBack();
+    } else {
+      // Keep remaining items in list
+      const resetItems = uncheckedItems.map(i => ({ ...i, is_checked: false }));
+      const updatedList: ShoppingList = {
+        ...list,
+        items: resetItems,
+        total_items: resetItems.length,
+        checked_items: 0,
+        status: 'active',
+      };
+      setItems(resetItems);
+      onUpdateList(updatedList);
+      setShoppingMode(false);
+      toast.success(`${checkedItems.length} item(ns) adicionado(s) ao estoque. ${uncheckedItems.length} item(ns) permanecem na lista.`);
+    }
   };
 
   const checkedCount = items.filter(i => i.is_checked).length;
@@ -83,7 +119,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
     <div className="pb-20">
       <PageHeader
         title={list.name}
-        subtitle={`${checkedCount}/${items.length} itens`}
+        subtitle={shoppingMode ? `${checkedCount}/${items.length} selecionados` : `${items.length} itens`}
         action={
           <button onClick={onBack} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
             <ArrowLeft className="w-4 h-4 text-secondary-foreground" />
@@ -92,14 +128,16 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
       />
 
       <div className="p-4 space-y-3">
-        {/* Add item button */}
-        <Button size="sm" onClick={() => setShowAddItem(true)} className="gradient-primary text-primary-foreground border-0 w-full">
-          <Plus className="w-4 h-4 mr-1" /> Adicionar Item
-        </Button>
+        {/* Add item button - hide in shopping mode */}
+        {!shoppingMode && (
+          <Button size="sm" onClick={() => setShowAddItem(true)} className="gradient-primary text-primary-foreground border-0 w-full">
+            <Plus className="w-4 h-4 mr-1" /> Adicionar Item
+          </Button>
+        )}
 
         {/* Add item form */}
         <AnimatePresence>
-          {showAddItem && (
+          {showAddItem && !shoppingMode && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
@@ -164,18 +202,20 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.2 }}
                 onClick={() => toggleItem(item.id)}
-                className={`bg-card rounded-lg shadow-card p-3 flex items-center gap-3 cursor-pointer transition-opacity ${
-                  item.is_checked ? 'opacity-50' : ''
+                className={`bg-card rounded-lg shadow-card p-3 flex items-center gap-3 ${shoppingMode ? 'cursor-pointer' : ''} transition-opacity ${
+                  item.is_checked && shoppingMode ? 'opacity-50' : ''
                 }`}
               >
-                <Checkbox
-                  checked={item.is_checked}
-                  onCheckedChange={() => toggleItem(item.id)}
-                  onClick={e => e.stopPropagation()}
-                  className="shrink-0"
-                />
+                {shoppingMode && (
+                  <Checkbox
+                    checked={item.is_checked}
+                    onCheckedChange={() => toggleItem(item.id)}
+                    onClick={e => e.stopPropagation()}
+                    className="shrink-0"
+                  />
+                )}
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium text-card-foreground ${item.is_checked ? 'line-through' : ''}`}>
+                  <p className={`text-sm font-medium text-card-foreground ${item.is_checked && shoppingMode ? 'line-through' : ''}`}>
                     {item.product_name}
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -193,14 +233,24 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
           )}
         </div>
 
-        {/* Save list */}
-        {items.length > 0 && (
+        {/* Action buttons */}
+        {items.length > 0 && !shoppingMode && (
           <Button
-            onClick={handleFinish}
+            onClick={handleConcluir}
             className="w-full gradient-primary text-primary-foreground border-0 h-12 text-base font-semibold"
           >
             <ShoppingCart className="w-5 h-5 mr-2" />
             Concluir Lista ({items.length} item{items.length !== 1 ? 's' : ''})
+          </Button>
+        )}
+
+        {shoppingMode && (
+          <Button
+            onClick={handleEncerrar}
+            className="w-full bg-amber-600 hover:bg-amber-700 text-primary-foreground border-0 h-12 text-base font-semibold"
+          >
+            <CheckCircle className="w-5 h-5 mr-2" />
+            Encerrar Compras ({checkedCount}/{items.length})
           </Button>
         )}
       </div>

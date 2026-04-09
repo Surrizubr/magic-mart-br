@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getLists } from '@/data/mockData';
@@ -71,6 +71,11 @@ export function ListsPage({ onBack }: ListsPageProps) {
     localStorage.setItem('purchase_history', JSON.stringify(history));
     setSelectedList(null);
   };
+
+  // Persist lists to localStorage on every change
+  useEffect(() => {
+    localStorage.setItem('shopping_lists', JSON.stringify(lists));
+  }, [lists]);
 
   const handleUpdateList = (updatedList: ShoppingList) => {
     setLists(prev => prev.map(l => l.id === updatedList.id ? updatedList : l));

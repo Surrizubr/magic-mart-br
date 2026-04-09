@@ -22,6 +22,17 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
   const [newUnit, setNewUnit] = useState('un');
   const [newPrice, setNewPrice] = useState('');
 
+  // Auto-persist items on every change
+  useEffect(() => {
+    const updatedList: ShoppingList = {
+      ...list,
+      items,
+      total_items: items.length,
+      checked_items: items.filter(i => i.is_checked).length,
+    };
+    onUpdateList(updatedList);
+  }, [items]);
+
   const sorted = useMemo(() => {
     const unchecked = items.filter(i => !i.is_checked);
     const checked = items.filter(i => i.is_checked);
@@ -53,24 +64,17 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
   };
 
   const handleFinish = () => {
-    const checked = items.filter(i => i.is_checked);
-    const unchecked = items.filter(i => !i.is_checked);
-
-    if (checked.length === 0) {
-      toast.error('Selecione ao menos um item para encerrar.');
-      return;
-    }
-
     const updatedList: ShoppingList = {
       ...list,
-      items: unchecked,
-      total_items: unchecked.length,
-      checked_items: 0,
-      status: unchecked.length === 0 ? 'completed' : 'active',
+      items,
+      total_items: items.length,
+      checked_items: items.filter(i => i.is_checked).length,
+      status: 'active',
     };
 
-    onFinishShopping(updatedList, checked);
-    toast.success(`${checked.length} item(ns) movido(s) para estoque!`);
+    onUpdateList(updatedList);
+    toast.success('Lista salva com sucesso!');
+    onBack();
   };
 
   const checkedCount = items.filter(i => i.is_checked).length;
@@ -189,14 +193,14 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
           )}
         </div>
 
-        {/* Finish shopping */}
+        {/* Save list */}
         {items.length > 0 && (
           <Button
             onClick={handleFinish}
             className="w-full gradient-primary text-primary-foreground border-0 h-12 text-base font-semibold"
           >
             <ShoppingCart className="w-5 h-5 mr-2" />
-            Encerrar Compras ({checkedCount} item{checkedCount !== 1 ? 's' : ''})
+            Concluir Lista ({items.length} item{items.length !== 1 ? 's' : ''})
           </Button>
         )}
       </div>

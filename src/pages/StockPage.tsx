@@ -60,6 +60,7 @@ export function StockPage({ onBack }: StockPageProps) {
       <PageHeader
         title="Estoque"
         subtitle={`${stock.length} produtos`}
+        onBack={onBack}
         action={
           <button className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center shadow-elevated">
             <Plus className="w-5 h-5 text-primary-foreground" />

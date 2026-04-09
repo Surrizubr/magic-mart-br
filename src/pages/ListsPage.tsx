@@ -99,6 +99,7 @@ export function ListsPage({ onBack }: ListsPageProps) {
       <PageHeader
         title="Listas de Compras"
         subtitle="Organize suas compras"
+        onBack={onBack}
         action={
           <button onClick={() => setShowNewList(true)} className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center shadow-elevated">
             <Plus className="w-5 h-5 text-primary-foreground" />

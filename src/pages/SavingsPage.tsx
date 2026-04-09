@@ -27,17 +27,17 @@ function getWeekColor(val: number) {
   return 'bg-warning'; // com compra = normal/caro
 }
 
-export function SavingsPage() {
+interface SavingsPageProps {
+  onBack?: () => void;
+}
+
+export function SavingsPage({ onBack }: SavingsPageProps) {
   return (
     <div className="pb-20">
       <PageHeader
         title="Dias Mais Baratos"
         subtitle="Análise de preços por dia"
-        left={
-          <button className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-            <ArrowLeft className="w-4 h-4 text-secondary-foreground" />
-          </button>
-        }
+        onBack={onBack}
       />
 
       <motion.div

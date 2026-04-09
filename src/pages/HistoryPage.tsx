@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
-import { mockHistory } from '@/data/mockData';
+import { getHistory } from '@/data/mockData';
 import { MapPin, ScanLine, Clock, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -25,12 +25,14 @@ const categoryIcons: Record<string, string> = {
 
 interface HistoryPageProps {
   onNavigateToScanner?: () => void;
+  onBack?: () => void;
 }
 
-export function HistoryPage({ onNavigateToScanner }: HistoryPageProps) {
-  const totalMonth = mockHistory.reduce((sum, h) => sum + h.total_price, 0);
+export function HistoryPage({ onNavigateToScanner, onBack }: HistoryPageProps) {
+  const history = getHistory();
+  const totalMonth = history.reduce((sum, h) => sum + h.total_price, 0);
 
-  const grouped = mockHistory.reduce<Record<string, typeof mockHistory>>((acc, h) => {
+  const grouped = history.reduce<Record<string, typeof history>>((acc, h) => {
     (acc[h.purchase_date] ||= []).push(h);
     return acc;
   }, {});
@@ -40,6 +42,7 @@ export function HistoryPage({ onNavigateToScanner }: HistoryPageProps) {
       <PageHeader
         title="Histórico"
         subtitle="Suas compras anteriores"
+        onBack={onBack}
         action={
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary text-primary text-xs font-medium">
             <Clock className="w-3.5 h-3.5" /> Abr 2026

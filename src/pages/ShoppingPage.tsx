@@ -47,16 +47,37 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
   const handleGeoLocation = () => {
     setGeoLoading(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setStoreName(`Lat: ${pos.coords.latitude.toFixed(4)}, Lng: ${pos.coords.longitude.toFixed(4)}`);
-        setStoreSet(true);
+      async (pos) => {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&addressdetails=1`,
+            { headers: { 'Accept-Language': 'pt-BR' } }
+          );
+          const data = await res.json();
+          const addr = data.address || {};
+          const road = addr.road || addr.pedestrian || addr.street || '';
+          const number = addr.house_number || '';
+          const shop = addr.shop || addr.supermarket || addr.building || addr.commercial || '';
+          let name = '';
+          if (shop) name = shop + ' - ';
+          name += road;
+          if (number) name += ', ' + number;
+          if (!name.trim()) name = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+          setStoreName(name.trim());
+          setStoreSet(true);
+          toast.success('Localização obtida!');
+        } catch {
+          setStoreName(`${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`);
+          setStoreSet(true);
+          toast.info('Coordenadas salvas.');
+        }
         setGeoLoading(false);
-        toast.success('Localização salva');
       },
       () => {
         setGeoLoading(false);
         toast.error('Não foi possível obter localização');
-      }
+      },
+      { enableHighAccuracy: true }
     );
   };
 

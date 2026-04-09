@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { getStock, getLists, getHistory } from '@/data/mockData';
-import { Plus, ShoppingCart, ScanLine, Share2, Calendar, AlertTriangle, ArrowRight, ChevronRight, Menu } from 'lucide-react';
+import { Plus, ShoppingCart, ScanLine, Share2, Calendar, AlertTriangle, ArrowRight, ChevronRight, Menu, ListChecks } from 'lucide-react';
 import { useState } from 'react';
 import { TabId } from '@/types';
 
@@ -120,25 +120,55 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
         <motion.div variants={item}>
           <button
             onClick={() => onNavigate('savings')}
-            className="w-full bg-accent rounded-xl p-4 flex items-center justify-between"
+            className="w-full rounded-xl p-4 flex items-center justify-between"
+            style={{ backgroundColor: 'hsl(48, 100%, 90%)' }}
           >
             <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-primary" />
-              <span className="text-sm font-semibold text-primary">Dias de compras mais baratos</span>
+              <Calendar className="w-5 h-5 text-yellow-700" />
+              <span className="text-sm font-semibold text-yellow-800">Dias de compras mais baratos</span>
             </div>
-            <ArrowRight className="w-4 h-4 text-primary" />
+            <ArrowRight className="w-4 h-4 text-yellow-700" />
           </button>
         </motion.div>
 
-        {/* Alerts */}
+        {/* Listas ativas */}
+        {activeLists.length > 0 && (
+          <motion.div variants={item}>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">Listas Ativas</h2>
+              <button onClick={() => onNavigate('lists')} className="text-xs text-primary font-medium flex items-center gap-0.5">
+                Ver todas <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="space-y-2">
+              {activeLists.map(l => (
+                <button
+                  key={l.id}
+                  onClick={() => onNavigate('lists')}
+                  className="w-full bg-card rounded-xl border border-border p-4 flex items-center gap-3 text-left"
+                >
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <ListChecks className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-foreground">{l.name}</p>
+                    <p className="text-xs text-muted-foreground">{l.items.length} itens · R$ {l.estimated_total.toFixed(2)}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Estoque rápido */}
         {criticalStock.length > 0 && (
           <motion.div variants={item}>
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">Alertas</h2>
+              <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">Estoque rápido</h2>
               <div className="flex items-center gap-2">
-                <button className="text-xs text-muted-foreground">Limpar</button>
-                <button className="text-xs text-primary font-medium flex items-center gap-0.5">
-                  Ver todas <ArrowRight className="w-3 h-3" />
+                <button onClick={() => onNavigate('stock')} className="text-xs text-primary font-medium flex items-center gap-0.5">
+                  Ver todos <ArrowRight className="w-3 h-3" />
                 </button>
                 <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
                   {criticalStock.length}
@@ -158,7 +188,7 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
                         <p className="text-sm font-bold text-foreground uppercase">{s.product_name}</p>
                         <p className="text-xs font-semibold text-warning">~{daysLeft} dias restantes</p>
                         <p className="text-xs text-muted-foreground">
-                          Estoque: {s.quantity} {s.unit} · Última compra: 03/04/2026
+                          Estoque: {s.quantity} {s.unit}
                         </p>
                       </div>
                     </div>

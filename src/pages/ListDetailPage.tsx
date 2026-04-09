@@ -4,14 +4,14 @@ import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ShoppingList, ShoppingListItem } from '@/types';
-import { ArrowLeft, Plus, ShoppingCart, CheckCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, ShoppingCart, CheckCircle, Trash2, MapPin, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ListDetailPageProps {
   list: ShoppingList;
   onBack: () => void;
   onUpdateList: (list: ShoppingList) => void;
-  onFinishShopping: (list: ShoppingList, checkedItems: ShoppingListItem[]) => void;
+  onFinishShopping: (list: ShoppingList, checkedItems: ShoppingListItem[], storeName: string) => void;
 }
 
 export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }: ListDetailPageProps) {

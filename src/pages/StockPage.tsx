@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
-import { mockStock } from '@/data/mockData';
+import { getStock } from '@/data/mockData';
 import { Plus, Minus, Search, Pencil, ShoppingCart } from 'lucide-react';
 import { StockItem } from '@/types';
 
@@ -20,10 +20,14 @@ const categoryIcons: Record<string, string> = {
   'Higiene': '♥', 'Hortifruti': '🥬', 'Padaria': '🍞',
 };
 
-export function StockPage() {
+interface StockPageProps {
+  onBack?: () => void;
+}
+
+export function StockPage({ onBack }: StockPageProps) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<StatusFilter>('all');
-  const [stock, setStock] = useState<StockItem[]>(mockStock);
+  const [stock, setStock] = useState<StockItem[]>(() => getStock());
 
   const filtered = stock.filter(s => {
     if (search && !s.product_name.toLowerCase().includes(search.toLowerCase()) &&

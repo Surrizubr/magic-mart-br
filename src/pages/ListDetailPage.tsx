@@ -21,7 +21,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
   const [newQty, setNewQty] = useState('1');
   const [newUnit, setNewUnit] = useState('un');
   const [newPrice, setNewPrice] = useState('');
-  const [shoppingMode, setShoppingMode] = useState(false);
+  const [shoppingMode, setShoppingMode] = useState(list.status === 'shopping');
 
   // Auto-persist items on every change
   useEffect(() => {

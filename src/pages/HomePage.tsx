@@ -107,7 +107,7 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
             <p className="text-xs text-muted-foreground">Nota fiscal</p>
           </button>
           <button
-            onClick={() => {}}
+            onClick={() => onNavigate('share')}
             className="bg-card rounded-xl border border-border p-4 text-left"
           >
             <Share2 className="w-6 h-6 text-primary mb-2" />

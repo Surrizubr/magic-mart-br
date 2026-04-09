@@ -55,21 +55,21 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
       <motion.div variants={container} initial="hidden" animate="show" className="px-4 space-y-5">
         {/* Stats Row */}
         <motion.div variants={item} className="flex gap-3">
-          <div className="flex-1 bg-card rounded-xl border border-border p-3 text-center">
+          <button onClick={() => onNavigate('stock')} className="flex-1 bg-card rounded-xl border border-border p-3 text-center hover:bg-accent/50 transition-colors">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Estoque</p>
             <p className="text-2xl font-bold text-foreground">{mockStock.length}</p>
             <p className="text-[10px] text-muted-foreground uppercase">Itens</p>
-          </div>
-          <div className="flex-1 bg-card rounded-xl border border-primary/30 p-3 text-center">
+          </button>
+          <button onClick={() => onNavigate('lists')} className="flex-1 bg-card rounded-xl border border-primary/30 p-3 text-center hover:bg-accent/50 transition-colors">
             <p className="text-[10px] font-semibold text-primary uppercase tracking-wider">Listas</p>
             <p className="text-2xl font-bold text-primary">{activeLists.length}</p>
             <p className="text-[10px] text-primary uppercase">Ativas</p>
-          </div>
-          <div className="flex-1 bg-card rounded-xl border border-border p-3 text-center">
+          </button>
+          <button onClick={() => onNavigate('history')} className="flex-1 bg-card rounded-xl border border-border p-3 text-center hover:bg-accent/50 transition-colors">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Histórico</p>
             <p className="text-xl font-bold text-foreground">R$ {totalMonth.toFixed(2)}</p>
             <p className="text-[10px] text-muted-foreground uppercase">Mês Atual</p>
-          </div>
+          </button>
         </motion.div>
 
         {/* Action Cards - 2x2 grid */}
@@ -85,7 +85,7 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
           </button>
           {/* Fazer Mercado */}
           <button
-            onClick={() => onNavigate('lists')}
+            onClick={() => onNavigate('shopping')}
             className="col-span-3 bg-card rounded-xl border border-border p-4 text-left"
           >
             <ShoppingCart className="w-6 h-6 text-primary mb-4" />

@@ -86,16 +86,61 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
     toast.info('Selecione os itens comprados e clique em "Encerrar Compras".');
   };
 
-  const handleEncerrar = () => {
+  const handleEncerrarClick = () => {
     const checkedItems = items.filter(i => i.is_checked);
-    const uncheckedItems = items.filter(i => !i.is_checked);
-
     if (checkedItems.length === 0) {
       toast.warning('Selecione pelo menos um item antes de encerrar.');
       return;
     }
+    setShowStoreDialog(true);
+  };
 
-    onFinishShopping(list, checkedItems);
+  const handleGeoLocation = () => {
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&addressdetails=1`,
+            { headers: { 'Accept-Language': 'pt-BR' } }
+          );
+          const data = await res.json();
+          const addr = data.address || {};
+          const road = addr.road || addr.pedestrian || addr.street || '';
+          const number = addr.house_number || '';
+          const shop = addr.shop || addr.supermarket || addr.building || addr.commercial || '';
+          let name = '';
+          if (shop) name = shop + ' - ';
+          name += road;
+          if (number) name += ', ' + number;
+          if (!name.trim()) name = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+          setStoreName(name.trim());
+          toast.success('Localização obtida!');
+        } catch {
+          setStoreName(`${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`);
+          toast.info('Coordenadas salvas (sem acesso à internet para nome da rua).');
+        }
+        setGeoLoading(false);
+      },
+      () => {
+        setGeoLoading(false);
+        toast.error('Não foi possível obter localização.');
+      },
+      { enableHighAccuracy: true }
+    );
+  };
+
+  const confirmEncerrar = () => {
+    if (!storeName.trim()) {
+      toast.error('Informe o local de compras.');
+      return;
+    }
+    const checkedItems = items.filter(i => i.is_checked);
+    const uncheckedItems = items.filter(i => !i.is_checked);
+
+    onFinishShopping(list, checkedItems, storeName.trim());
+    setShowStoreDialog(false);
+    setStoreName('');
 
     if (uncheckedItems.length === 0) {
       const updatedList: ShoppingList = {

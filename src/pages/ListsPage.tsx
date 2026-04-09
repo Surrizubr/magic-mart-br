@@ -22,7 +22,7 @@ export function ListsPage({ onBack }: ListsPageProps) {
   const [selectedList, setSelectedList] = useState<ShoppingList | null>(null);
 
   const filtered = lists.filter(l => {
-    if (filter === 'active') return l.status === 'active';
+    if (filter === 'active') return l.status === 'active' || l.status === 'shopping';
     if (filter === 'completed') return l.status === 'completed';
     return l.status === 'archived';
   });

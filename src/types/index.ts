@@ -1,7 +1,7 @@
 export interface ShoppingList {
   id: string;
   name: string;
-  status: 'active' | 'completed' | 'archived';
+  status: 'active' | 'shopping' | 'completed' | 'archived';
   total_items: number;
   checked_items: number;
   estimated_total: number;

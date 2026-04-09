@@ -21,7 +21,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
   const [newQty, setNewQty] = useState('1');
   const [newUnit, setNewUnit] = useState('un');
   const [newPrice, setNewPrice] = useState('');
-  const [shoppingMode, setShoppingMode] = useState(false);
+  const [shoppingMode, setShoppingMode] = useState(list.status === 'shopping');
 
   // Auto-persist items on every change
   useEffect(() => {
@@ -67,8 +67,15 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
   };
 
   const handleConcluir = () => {
-    // First click: enter shopping mode
     setShoppingMode(true);
+    const updatedList: ShoppingList = {
+      ...list,
+      items,
+      total_items: items.length,
+      checked_items: 0,
+      status: 'shopping',
+    };
+    onUpdateList(updatedList);
     toast.info('Selecione os itens comprados e clique em "Encerrar Compras".');
   };
 
@@ -245,13 +252,18 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
         )}
 
         {shoppingMode && (
-          <Button
-            onClick={handleEncerrar}
-            className="w-full bg-amber-600 hover:bg-amber-700 text-primary-foreground border-0 h-12 text-base font-semibold"
-          >
-            <CheckCircle className="w-5 h-5 mr-2" />
-            Encerrar Compras ({checkedCount}/{items.length})
-          </Button>
+          <div className="space-y-2">
+            <p className="text-xs text-center text-muted-foreground">
+              ⚠️ Ao encerrar, os itens selecionados serão transferidos para o estoque.
+            </p>
+            <Button
+              onClick={handleEncerrar}
+              className="w-full bg-amber-600 hover:bg-amber-700 text-primary-foreground border-0 h-12 text-base font-semibold"
+            >
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Encerrar Compras ({checkedCount}/{items.length})
+            </Button>
+          </div>
         )}
       </div>
     </div>

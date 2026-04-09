@@ -39,7 +39,7 @@ export function ListsPage({ onBack }: ListsPageProps) {
     setShowNewList(false);
   };
 
-  const handleFinishShopping = (updatedList: ShoppingList, checkedItems: ShoppingListItem[]) => {
+  const handleFinishShopping = (updatedList: ShoppingList, checkedItems: ShoppingListItem[], storeName: string) => {
     setLists(prev => prev.map(l => l.id === updatedList.id ? updatedList : l));
     const existingStock: StockItem[] = JSON.parse(localStorage.getItem('stock_items') || '[]');
     checkedItems.forEach(item => {
@@ -64,7 +64,7 @@ export function ListsPage({ onBack }: ListsPageProps) {
         product_name: item.product_name, category: item.category,
         quantity: item.quantity, price: item.actual_price || item.estimated_price,
         total_price: (item.actual_price || item.estimated_price) * item.quantity,
-        store_name: 'Compra manual', purchase_date: new Date().toISOString().slice(0, 10),
+        store_name: storeName, purchase_date: new Date().toISOString().slice(0, 10),
         list_id: updatedList.id,
       });
     });

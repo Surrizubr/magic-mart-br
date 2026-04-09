@@ -9,7 +9,11 @@ import Tesseract from 'tesseract.js';
 type ScanMode = 'choose' | 'single' | 'multi';
 type ScanStep = 'capture' | 'processing' | 'results';
 
-export function ScannerPage() {
+interface ScannerPageProps {
+  onBack?: () => void;
+}
+
+export function ScannerPage({ onBack }: ScannerPageProps) {
   const [mode, setMode] = useState<ScanMode>('choose');
   const [step, setStep] = useState<ScanStep>('capture');
   const [images, setImages] = useState<string[]>([]);
@@ -117,7 +121,7 @@ export function ScannerPage() {
   if (mode === 'choose') {
     return (
       <div className="pb-20">
-        <PageHeader title="Scanner" subtitle="Digitalize cupons fiscais" />
+        <PageHeader title="Scanner" subtitle="Digitalize cupons fiscais" onBack={onBack} />
         <div className="p-4 space-y-4">
           <p className="text-sm text-muted-foreground text-center">
             Escaneie seus cupons fiscais para adicionar produtos automaticamente ao estoque e histórico.

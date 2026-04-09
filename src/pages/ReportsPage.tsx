@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
-import { monthlySpending, categorySpending, mockHistory } from '@/data/mockData';
+import { monthlySpending, categorySpending, getHistory } from '@/data/mockData';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { TrendingUp, BarChart3, ShoppingCart, Clock, Calendar } from 'lucide-react';
 
@@ -16,16 +16,21 @@ const CATEGORY_COLORS = [
   'hsl(160, 50%, 50%)',  // Outros - mint
 ];
 
-export function ReportsPage() {
-  const currentMonth = mockHistory.reduce((sum, h) => sum + h.total_price, 0);
+interface ReportsPageProps {
+  onBack?: () => void;
+}
 
-  const productCounts = mockHistory.reduce<Record<string, number>>((acc, h) => {
+export function ReportsPage({ onBack }: ReportsPageProps) {
+  const history = getHistory();
+  const currentMonth = history.reduce((sum, h) => sum + h.total_price, 0);
+
+  const productCounts = history.reduce<Record<string, number>>((acc, h) => {
     acc[h.product_name] = (acc[h.product_name] || 0) + h.quantity;
     return acc;
   }, {});
   const topProducts = Object.entries(productCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-  const storeVisits = mockHistory.reduce<Record<string, number>>((acc, h) => {
+  const storeVisits = history.reduce<Record<string, number>>((acc, h) => {
     acc[h.store_name] = (acc[h.store_name] || 0) + 1;
     return acc;
   }, {});
@@ -42,6 +47,7 @@ export function ReportsPage() {
       <PageHeader
         title="Relatórios"
         subtitle="Análise de consumo"
+        onBack={onBack}
         action={
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary text-primary text-xs font-medium">
             <Calendar className="w-3.5 h-3.5" /> Abr 2026

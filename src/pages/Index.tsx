@@ -23,16 +23,18 @@ const Index = () => {
     return <TrialWelcome onStartTrial={startTrial} />;
   }
 
+  const goHome = () => setActiveTab('home');
+
   const renderPage = () => {
     switch (activeTab) {
       case 'home': return <HomePage daysLeft={daysLeft} isTrial={status === 'trial'} onNavigate={setActiveTab} onOpenMenu={() => setMenuOpen(true)} />;
-      case 'lists': return <ListsPage />;
-      case 'stock': return <StockPage />;
-      case 'savings': return <SavingsPage />;
-      case 'history': return <HistoryPage onNavigateToScanner={() => setActiveTab('scanner')} />;
-      case 'reports': return <ReportsPage />;
-      case 'scanner': return <ScannerPage />;
-      case 'shopping': return <ShoppingPage onNavigate={setActiveTab} />;
+      case 'lists': return <ListsPage onBack={goHome} />;
+      case 'stock': return <StockPage onBack={goHome} />;
+      case 'savings': return <SavingsPage onBack={goHome} />;
+      case 'history': return <HistoryPage onNavigateToScanner={() => setActiveTab('scanner')} onBack={goHome} />;
+      case 'reports': return <ReportsPage onBack={goHome} />;
+      case 'scanner': return <ScannerPage onBack={goHome} />;
+      case 'shopping': return <ShoppingPage onNavigate={setActiveTab} onBack={goHome} />;
     }
   };
 

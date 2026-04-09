@@ -23,9 +23,10 @@ const categories = [
 
 interface ShoppingPageProps {
   onNavigate: (tab: TabId) => void;
+  onBack?: () => void;
 }
 
-export function ShoppingPage({ onNavigate }: ShoppingPageProps) {
+export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
   const [mode, setMode] = useState<ShoppingMode>(null);
   const [storeName, setStoreName] = useState('');
   const [storeSet, setStoreSet] = useState(false);
@@ -185,11 +186,7 @@ export function ShoppingPage({ onNavigate }: ShoppingPageProps) {
         <PageHeader
           title="Fazer Mercado"
           subtitle="Escolha como registrar suas compras"
-          left={
-            <button onClick={() => onNavigate('home')} className="p-1">
-              <ArrowLeft className="w-5 h-5 text-foreground" />
-            </button>
-          }
+          onBack={onBack}
         />
         <div className="px-4 pt-4 space-y-3">
           <motion.button

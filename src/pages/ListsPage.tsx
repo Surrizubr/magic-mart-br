@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
-import { mockLists } from '@/data/mockData';
+import { getLists } from '@/data/mockData';
 import { Plus, ShoppingCart, CheckCircle2, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ShoppingList, ShoppingListItem, StockItem } from '@/types';
@@ -10,11 +10,15 @@ import { toast } from 'sonner';
 
 type Filter = 'active' | 'completed' | 'archived';
 
-export function ListsPage() {
+interface ListsPageProps {
+  onBack?: () => void;
+}
+
+export function ListsPage({ onBack }: ListsPageProps) {
   const [filter, setFilter] = useState<Filter>('active');
   const [showNewList, setShowNewList] = useState(false);
   const [newName, setNewName] = useState('');
-  const [lists, setLists] = useState<ShoppingList[]>(mockLists);
+  const [lists, setLists] = useState<ShoppingList[]>(() => getLists());
   const [selectedList, setSelectedList] = useState<ShoppingList | null>(null);
 
   const filtered = lists.filter(l => {
@@ -95,6 +99,7 @@ export function ListsPage() {
       <PageHeader
         title="Listas de Compras"
         subtitle="Organize suas compras"
+        onBack={onBack}
         action={
           <button onClick={() => setShowNewList(true)} className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center shadow-elevated">
             <Plus className="w-5 h-5 text-primary-foreground" />

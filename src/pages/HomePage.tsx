@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { mockLists, mockStock, mockHistory } from '@/data/mockData';
+import { getStock, getLists, getHistory } from '@/data/mockData';
 import { Plus, ShoppingCart, ScanLine, Share2, Calendar, AlertTriangle, ArrowRight, ChevronRight, Menu } from 'lucide-react';
 import { useState } from 'react';
 import { TabId } from '@/types';
@@ -21,9 +21,12 @@ const item = {
 };
 
 export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePageProps) {
-  const criticalStock = mockStock.filter(s => s.status === 'critical' || s.status === 'low');
-  const activeLists = mockLists.filter(l => l.status === 'active');
-  const totalMonth = mockHistory.reduce((sum, h) => sum + h.total_price, 0);
+  const stock = getStock();
+  const lists = getLists();
+  const history = getHistory();
+  const criticalStock = stock.filter(s => s.status === 'critical' || s.status === 'low');
+  const activeLists = lists.filter(l => l.status === 'active');
+  const totalMonth = history.reduce((sum, h) => sum + h.total_price, 0);
   const today = new Date();
   const dateStr = today.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -57,7 +60,7 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
         <motion.div variants={item} className="flex gap-3">
           <button onClick={() => onNavigate('stock')} className="flex-1 bg-card rounded-xl border border-border p-3 text-center hover:bg-accent/50 transition-colors">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Estoque</p>
-            <p className="text-2xl font-bold text-foreground">{mockStock.length}</p>
+            <p className="text-2xl font-bold text-foreground">{stock.length}</p>
             <p className="text-[10px] text-muted-foreground uppercase">Itens</p>
           </button>
           <button onClick={() => onNavigate('lists')} className="flex-1 bg-card rounded-xl border border-primary/30 p-3 text-center hover:bg-accent/50 transition-colors">

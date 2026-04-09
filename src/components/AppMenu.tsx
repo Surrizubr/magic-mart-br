@@ -5,6 +5,7 @@ import { useTheme, ThemeMode } from '@/contexts/ThemeContext';
 import { useLanguage, Lang } from '@/contexts/LanguageContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { supabase } from '@/integrations/supabase/client';
+import { resetAllData } from '@/data/mockData';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertDialog,
@@ -40,9 +41,7 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
   };
 
   const handleReset = () => {
-    localStorage.removeItem('stock_items');
-    localStorage.removeItem('purchase_history');
-    localStorage.removeItem('shopping_lists');
+    resetAllData();
     setConfirmReset(false);
     onClose();
     window.location.reload();

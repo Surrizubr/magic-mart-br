@@ -1,6 +1,6 @@
 import { ShoppingList, StockItem, PurchaseHistory } from '@/types';
 
-export const mockLists: ShoppingList[] = [
+const defaultLists: ShoppingList[] = [
   {
     id: '1', name: 'Compras da semana', status: 'active',
     total_items: 12, checked_items: 5, estimated_total: 187.50, actual_total: 0,
@@ -24,7 +24,7 @@ export const mockLists: ShoppingList[] = [
   },
 ];
 
-export const mockStock: StockItem[] = [
+const defaultStock: StockItem[] = [
   { id: 's1', product_name: 'Arroz 5kg', category: 'Grãos', quantity: 1, unit: 'un', min_quantity: 2, daily_consumption_rate: 0.14, status: 'low', last_price: 22.90 },
   { id: 's2', product_name: 'Feijão 1kg', category: 'Grãos', quantity: 0, unit: 'un', min_quantity: 1, daily_consumption_rate: 0.1, status: 'critical', last_price: 8.50 },
   { id: 's3', product_name: 'Leite integral', category: 'Laticínios', quantity: 3, unit: 'un', min_quantity: 2, daily_consumption_rate: 1, status: 'ok', last_price: 5.49 },
@@ -33,7 +33,7 @@ export const mockStock: StockItem[] = [
   { id: 's6', product_name: 'Papel higiênico', category: 'Limpeza', quantity: 4, unit: 'un', min_quantity: 6, daily_consumption_rate: 0.5, status: 'low', last_price: 19.90 },
 ];
 
-export const mockHistory: PurchaseHistory[] = [
+const defaultHistory: PurchaseHistory[] = [
   { id: 'h1', product_name: 'Arroz 5kg', category: 'Grãos', quantity: 1, price: 22.90, total_price: 22.90, store_name: 'Supermercado Extra', purchase_date: '2026-04-03' },
   { id: 'h2', product_name: 'Feijão 1kg', category: 'Grãos', quantity: 2, price: 8.50, total_price: 17.00, store_name: 'Supermercado Extra', purchase_date: '2026-04-03' },
   { id: 'h3', product_name: 'Leite integral', category: 'Laticínios', quantity: 6, price: 5.49, total_price: 32.94, store_name: 'Atacadão', purchase_date: '2026-04-01' },
@@ -41,6 +41,43 @@ export const mockHistory: PurchaseHistory[] = [
   { id: 'h5', product_name: 'Banana prata', category: 'Frutas', quantity: 2, price: 7.90, total_price: 15.80, store_name: 'Feira livre', purchase_date: '2026-03-28' },
   { id: 'h6', product_name: 'Carne moída', category: 'Carnes', quantity: 1, price: 32.90, total_price: 32.90, store_name: 'Supermercado Extra', purchase_date: '2026-03-25' },
 ];
+
+function loadFromStorage<T>(key: string, fallback: T): T {
+  try {
+    const stored = localStorage.getItem(key);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return fallback;
+}
+
+export function getStock(): StockItem[] {
+  return loadFromStorage('stock_items', defaultStock);
+}
+
+export function getLists(): ShoppingList[] {
+  return loadFromStorage('shopping_lists', defaultLists);
+}
+
+export function getHistory(): PurchaseHistory[] {
+  return loadFromStorage('purchase_history', defaultHistory);
+}
+
+export function resetAllData() {
+  localStorage.removeItem('stock_items');
+  localStorage.removeItem('purchase_history');
+  localStorage.removeItem('shopping_lists');
+  localStorage.removeItem('savings_data');
+  localStorage.removeItem('cheapest_days');
+  // Set empty arrays so reload shows clean state
+  localStorage.setItem('stock_items', '[]');
+  localStorage.setItem('purchase_history', '[]');
+  localStorage.setItem('shopping_lists', '[]');
+}
+
+// Keep backward-compatible exports for pages that import them directly
+export const mockLists = defaultLists;
+export const mockStock = defaultStock;
+export const mockHistory = defaultHistory;
 
 export const monthlySpending = [
   { month: 'Out', value: 620 },

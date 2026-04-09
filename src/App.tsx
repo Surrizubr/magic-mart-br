@@ -7,7 +7,6 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import Index from "./pages/Index.tsx";
-import { LoginPage } from "./pages/LoginPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -22,9 +21,8 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/" element={<Index />} />
-                <Route path="*" element={<NotFound />} />
+              <Route path="/" element={<Index />} />
+              <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
           </TooltipProvider>

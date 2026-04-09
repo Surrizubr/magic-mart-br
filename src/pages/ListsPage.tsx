@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getLists } from '@/data/mockData';
-import { Plus, ShoppingCart, CheckCircle2, Archive } from 'lucide-react';
+import { Plus, ShoppingCart, CheckCircle2, Archive, Trash2, ArchiveRestore } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ShoppingList, ShoppingListItem, StockItem } from '@/types';
 import { ListDetailPage } from './ListDetailPage';
@@ -72,13 +72,32 @@ export function ListsPage({ onBack }: ListsPageProps) {
     setSelectedList(null);
   };
 
-  // Persist lists to localStorage on every change
   useEffect(() => {
     localStorage.setItem('shopping_lists', JSON.stringify(lists));
   }, [lists]);
 
   const handleUpdateList = (updatedList: ShoppingList) => {
     setLists(prev => prev.map(l => l.id === updatedList.id ? updatedList : l));
+  };
+
+  const handleSwipe = (listId: string, direction: 'left' | 'right') => {
+    const list = lists.find(l => l.id === listId);
+    if (!list) return;
+
+    if (direction === 'left') {
+      // Delete
+      setLists(prev => prev.filter(l => l.id !== listId));
+      toast.success('Lista excluída.');
+    } else {
+      // Right: archive or unarchive
+      if (list.status === 'archived') {
+        setLists(prev => prev.map(l => l.id === listId ? { ...l, status: 'active' as const } : l));
+        toast.success('Lista restaurada.');
+      } else {
+        setLists(prev => prev.map(l => l.id === listId ? { ...l, status: 'archived' as const } : l));
+        toast.success('Lista arquivada.');
+      }
+    }
   };
 
   if (selectedList) {
@@ -134,6 +153,11 @@ export function ListsPage({ onBack }: ListsPageProps) {
           })}
         </div>
 
+        {/* Swipe hint */}
+        <p className="text-[10px] text-muted-foreground text-center">
+          ← Deslize para excluir · Deslize para arquivar →
+        </p>
+
         {/* New List Form */}
         <AnimatePresence>
           {showNewList && (
@@ -168,36 +192,94 @@ export function ListsPage({ onBack }: ListsPageProps) {
         {/* Lists */}
         <motion.div layout className="space-y-3">
           {filtered.map((l, i) => (
-            <motion.div
+            <SwipeableListCard
               key={l.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              onClick={() => setSelectedList(l)}
-              className="bg-card rounded-xl border border-border p-4 cursor-pointer hover:shadow-elevated transition-shadow"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center shrink-0">
-                  <ShoppingCart className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-foreground">{l.name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{l.checked_items}/{l.total_items} itens</p>
-                </div>
-              </div>
-              <div className="mt-3 w-full h-1.5 bg-secondary rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full gradient-primary transition-all"
-                  style={{ width: `${l.total_items ? (l.checked_items / l.total_items) * 100 : 0}%` }}
-                />
-              </div>
-            </motion.div>
+              list={l}
+              index={i}
+              onSelect={() => setSelectedList(l)}
+              onSwipe={(dir) => handleSwipe(l.id, dir)}
+            />
           ))}
           {filtered.length === 0 && (
             <p className="text-center text-sm text-muted-foreground py-8">Nenhuma lista encontrada</p>
           )}
         </motion.div>
       </div>
+    </div>
+  );
+}
+
+function SwipeableListCard({
+  list,
+  index,
+  onSelect,
+  onSwipe,
+}: {
+  list: ShoppingList;
+  index: number;
+  onSelect: () => void;
+  onSwipe: (dir: 'left' | 'right') => void;
+}) {
+  const [dragX, setDragX] = useState(0);
+  const threshold = 100;
+
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    if (info.offset.x < -threshold) {
+      onSwipe('left');
+    } else if (info.offset.x > threshold) {
+      onSwipe('right');
+    }
+    setDragX(0);
+  };
+
+  const bgLeft = dragX < -30 ? 'bg-destructive' : 'bg-transparent';
+  const bgRight = dragX > 30 ? 'bg-primary' : 'bg-transparent';
+
+  return (
+    <div className="relative overflow-hidden rounded-xl">
+      {/* Background hints */}
+      <div className={`absolute inset-y-0 left-0 w-full flex items-center justify-end pr-4 rounded-xl ${bgLeft} transition-colors`}>
+        {dragX < -30 && <Trash2 className="w-5 h-5 text-destructive-foreground" />}
+      </div>
+      <div className={`absolute inset-y-0 right-0 w-full flex items-center justify-start pl-4 rounded-xl ${bgRight} transition-colors`}>
+        {dragX > 30 && (
+          list.status === 'archived'
+            ? <ArchiveRestore className="w-5 h-5 text-primary-foreground" />
+            : <Archive className="w-5 h-5 text-primary-foreground" />
+        )}
+      </div>
+
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.4}
+        onDrag={(_, info) => setDragX(info.offset.x)}
+        onDragEnd={handleDragEnd}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.05 }}
+        onClick={onSelect}
+        className="bg-card rounded-xl border border-border p-4 cursor-pointer hover:shadow-elevated transition-shadow relative z-10"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center shrink-0">
+            <ShoppingCart className="w-5 h-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-foreground">{list.name}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {list.status === 'shopping' ? '🛒 Em compras · ' : ''}
+              {list.checked_items}/{list.total_items} itens
+            </p>
+          </div>
+        </div>
+        <div className="mt-3 w-full h-1.5 bg-secondary rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full gradient-primary transition-all"
+            style={{ width: `${list.total_items ? (list.checked_items / list.total_items) * 100 : 0}%` }}
+          />
+        </div>
+      </motion.div>
     </div>
   );
 }

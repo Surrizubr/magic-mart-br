@@ -121,7 +121,7 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
   if (mode === 'choose') {
     return (
       <div className="pb-20">
-        <PageHeader title="Scanner" subtitle="Digitalize cupons fiscais" />
+        <PageHeader title="Scanner" subtitle="Digitalize cupons fiscais" onBack={onBack} />
         <div className="p-4 space-y-4">
           <p className="text-sm text-muted-foreground text-center">
             Escaneie seus cupons fiscais para adicionar produtos automaticamente ao estoque e histórico.

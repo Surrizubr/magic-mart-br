@@ -20,7 +20,7 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
-export function HomePage({ daysLeft, isTrial, onNavigate }: HomePageProps) {
+export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePageProps) {
   const criticalStock = mockStock.filter(s => s.status === 'critical' || s.status === 'low');
   const activeLists = mockLists.filter(l => l.status === 'active');
   const totalMonth = mockHistory.reduce((sum, h) => sum + h.total_price, 0);
@@ -35,15 +35,20 @@ export function HomePage({ daysLeft, isTrial, onNavigate }: HomePageProps) {
         animate={{ y: 0, opacity: 1 }}
         className="px-4 pt-4 pb-3"
       >
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center">
-            <span className="text-primary-foreground text-lg">🌿</span>
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center">
+              <span className="text-primary-foreground text-lg">🌿</span>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Olá, Usuário 👋</p>
+              <h1 className="text-xl font-bold text-foreground">Magicmart AI</h1>
+              <p className="text-xs text-muted-foreground capitalize">{dateStr}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Olá, Usuário 👋</p>
-            <h1 className="text-xl font-bold text-foreground">Magicmart AI</h1>
-            <p className="text-xs text-muted-foreground capitalize">{dateStr}</p>
-          </div>
+          <button onClick={onOpenMenu} className="p-2 rounded-xl bg-card border border-border hover:bg-accent transition-colors">
+            <Menu className="w-5 h-5 text-foreground" />
+          </button>
         </div>
       </motion.header>
 

@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ShoppingList, ShoppingListItem } from '@/types';
-import { ArrowLeft, Plus, ShoppingCart, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Plus, ShoppingCart, CheckCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ListDetailPageProps {
@@ -23,7 +23,6 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
   const [newPrice, setNewPrice] = useState('');
   const [shoppingMode, setShoppingMode] = useState(list.status === 'shopping');
 
-  // Auto-persist items on every change
   useEffect(() => {
     const updatedList: ShoppingList = {
       ...list,
@@ -44,6 +43,11 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
   const toggleItem = (id: string) => {
     if (!shoppingMode) return;
     setItems(prev => prev.map(i => i.id === id ? { ...i, is_checked: !i.is_checked } : i));
+  };
+
+  const removeItem = (id: string) => {
+    setItems(prev => prev.filter(i => i.id !== id));
+    toast.success('Item removido.');
   };
 
   const addItem = () => {
@@ -88,11 +92,9 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
       return;
     }
 
-    // Send checked items to stock/history
     onFinishShopping(list, checkedItems);
 
     if (uncheckedItems.length === 0) {
-      // All items checked → delete list (set empty + notify parent)
       const updatedList: ShoppingList = {
         ...list,
         items: [],
@@ -104,18 +106,16 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
       toast.success('Compras encerradas! Lista concluída.');
       onBack();
     } else {
-      // Keep remaining items in list
       const resetItems = uncheckedItems.map(i => ({ ...i, is_checked: false }));
       const updatedList: ShoppingList = {
         ...list,
         items: resetItems,
         total_items: resetItems.length,
         checked_items: 0,
-        status: 'active',
+        status: 'shopping',
       };
       setItems(resetItems);
       onUpdateList(updatedList);
-      setShoppingMode(false);
       toast.success(`${checkedItems.length} item(ns) adicionado(s) ao estoque. ${uncheckedItems.length} item(ns) permanecem na lista.`);
     }
   };
@@ -135,16 +135,14 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
       />
 
       <div className="p-4 space-y-3">
-        {/* Add item button - hide in shopping mode */}
-        {!shoppingMode && (
-          <Button size="sm" onClick={() => setShowAddItem(true)} className="gradient-primary text-primary-foreground border-0 w-full">
-            <Plus className="w-4 h-4 mr-1" /> Adicionar Item
-          </Button>
-        )}
+        {/* Add item button - always visible */}
+        <Button size="sm" onClick={() => setShowAddItem(true)} className="gradient-primary text-primary-foreground border-0 w-full">
+          <Plus className="w-4 h-4 mr-1" /> Adicionar Item
+        </Button>
 
         {/* Add item form */}
         <AnimatePresence>
-          {showAddItem && !shoppingMode && (
+          {showAddItem && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
@@ -230,7 +228,13 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
                     {item.estimated_price > 0 && ` · R$ ${item.estimated_price.toFixed(2)}`}
                   </p>
                 </div>
-                <span className="text-xs text-muted-foreground">{item.category}</span>
+                <span className="text-xs text-muted-foreground mr-1">{item.category}</span>
+                <button
+                  onClick={e => { e.stopPropagation(); removeItem(item.id); }}
+                  className="shrink-0 w-7 h-7 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                </button>
               </motion.div>
             ))}
           </AnimatePresence>
@@ -240,7 +244,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
           )}
         </div>
 
-        {/* Action buttons */}
+        {/* Concluir Lista - only for non-shopping lists */}
         {items.length > 0 && !shoppingMode && (
           <Button
             onClick={handleConcluir}
@@ -251,6 +255,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
           </Button>
         )}
 
+        {/* Encerrar Compras - shopping mode */}
         {shoppingMode && (
           <div className="space-y-2">
             <p className="text-xs text-center text-muted-foreground">

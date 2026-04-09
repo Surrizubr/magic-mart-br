@@ -310,7 +310,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
               ⚠️ Ao encerrar, os itens selecionados serão transferidos para o estoque.
             </p>
             <Button
-              onClick={handleEncerrar}
+              onClick={handleEncerrarClick}
               className="w-full bg-amber-600 hover:bg-amber-700 text-primary-foreground border-0 h-12 text-base font-semibold"
             >
               <CheckCircle className="w-5 h-5 mr-2" />
@@ -318,6 +318,53 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
             </Button>
           </div>
         )}
+
+        {/* Store location dialog */}
+        <AnimatePresence>
+          {showStoreDialog && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+              onClick={() => setShowStoreDialog(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={e => e.stopPropagation()}
+                className="bg-card rounded-xl border border-border p-5 w-full max-w-sm space-y-4 shadow-xl"
+              >
+                <h3 className="text-base font-bold text-card-foreground">Local de Compras</h3>
+                <p className="text-xs text-muted-foreground">Informe onde você fez as compras:</p>
+                <input
+                  value={storeName}
+                  onChange={e => setStoreName(e.target.value)}
+                  placeholder="Ex: Supermercado Extra"
+                  className="w-full p-3 rounded-lg border border-border bg-background text-foreground text-sm outline-none focus:ring-2 ring-primary/30"
+                  autoFocus
+                />
+                <button
+                  onClick={handleGeoLocation}
+                  disabled={geoLoading}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary text-secondary-foreground text-xs font-medium w-full justify-center"
+                >
+                  {geoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+                  {geoLoading ? 'Obtendo endereço...' : 'Usar minha localização'}
+                </button>
+                <div className="flex gap-2 pt-1">
+                  <Button onClick={confirmEncerrar} className="flex-1 gradient-primary text-primary-foreground border-0">
+                    Confirmar
+                  </Button>
+                  <Button variant="ghost" onClick={() => setShowStoreDialog(false)} className="flex-1">
+                    Cancelar
+                  </Button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

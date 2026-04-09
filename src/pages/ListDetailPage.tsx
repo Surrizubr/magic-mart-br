@@ -22,6 +22,9 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
   const [newUnit, setNewUnit] = useState('un');
   const [newPrice, setNewPrice] = useState('');
   const [shoppingMode, setShoppingMode] = useState(list.status === 'shopping');
+  const [showStoreDialog, setShowStoreDialog] = useState(false);
+  const [storeName, setStoreName] = useState('');
+  const [geoLoading, setGeoLoading] = useState(false);
 
   useEffect(() => {
     const updatedList: ShoppingList = {

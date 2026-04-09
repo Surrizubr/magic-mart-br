@@ -131,17 +131,21 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
           </button>
         </motion.div>
 
-        {/* Listas ativas */}
-        {activeLists.length > 0 && (
-          <motion.div variants={item}>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">Listas Ativas</h2>
-              <button onClick={() => onNavigate('lists')} className="text-xs text-primary font-medium flex items-center gap-0.5">
-                Ver todas <ArrowRight className="w-3 h-3" />
-              </button>
+        {/* Listas Ativas */}
+        <motion.div variants={item}>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">Listas Ativas</h2>
+            <button onClick={() => onNavigate('lists')} className="text-xs text-primary font-medium flex items-center gap-0.5">
+              Ver todas <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+          {activeLists.length === 0 ? (
+            <div className="bg-card rounded-xl border border-border p-4 text-center">
+              <p className="text-xs text-muted-foreground">Nenhuma lista ativa</p>
             </div>
-            <div className="space-y-2">
-              {activeLists.map(l => (
+          ) : (
+            <div className="max-h-[280px] overflow-y-auto pr-1 space-y-2" style={{ scrollbarWidth: 'thin' }}>
+              {activeLists.slice(0, 5).map(l => (
                 <button
                   key={l.id}
                   onClick={() => onNavigate('lists')}
@@ -158,25 +162,31 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
                 </button>
               ))}
             </div>
-          </motion.div>
-        )}
+          )}
+        </motion.div>
 
-        {/* Estoque rápido */}
-        {criticalStock.length > 0 && (
-          <motion.div variants={item}>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">Estoque rápido</h2>
-              <div className="flex items-center gap-2">
-                <button onClick={() => onNavigate('stock')} className="text-xs text-primary font-medium flex items-center gap-0.5">
-                  Ver todos <ArrowRight className="w-3 h-3" />
-                </button>
-                <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+        {/* Alertas */}
+        <motion.div variants={item}>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">Alertas</h2>
+            <div className="flex items-center gap-2">
+              <button onClick={() => onNavigate('stock')} className="text-xs text-primary font-medium flex items-center gap-0.5">
+                Ver todos <ArrowRight className="w-3 h-3" />
+              </button>
+              {criticalStock.length > 0 && (
+                <span className="w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
                   {criticalStock.length}
                 </span>
-              </div>
+              )}
             </div>
-            <div className="space-y-2">
-              {criticalStock.map(s => {
+          </div>
+          {criticalStock.length === 0 ? (
+            <div className="bg-card rounded-xl border border-border p-4 text-center">
+              <p className="text-xs text-muted-foreground">Estoque em dia ✅</p>
+            </div>
+          ) : (
+            <div className="max-h-[280px] overflow-y-auto pr-1 space-y-2" style={{ scrollbarWidth: 'thin' }}>
+              {criticalStock.slice(0, 5).map(s => {
                 const daysLeft = s.daily_consumption_rate > 0 ? Math.ceil(s.quantity / s.daily_consumption_rate) : 99;
                 return (
                   <div key={s.id} className="bg-card rounded-xl border border-border p-4">
@@ -187,17 +197,15 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
                       <div>
                         <p className="text-sm font-bold text-foreground uppercase">{s.product_name}</p>
                         <p className="text-xs font-semibold text-warning">~{daysLeft} dias restantes</p>
-                        <p className="text-xs text-muted-foreground">
-                          Estoque: {s.quantity} {s.unit}
-                        </p>
+                        <p className="text-xs text-muted-foreground">Estoque: {s.quantity} {s.unit}</p>
                       </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </motion.div>
-        )}
+          )}
+        </motion.div>
       </motion.div>
     </div>
   );

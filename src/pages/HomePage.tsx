@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { mockLists, mockStock, mockHistory } from '@/data/mockData';
-import { Plus, ShoppingCart, ScanLine, Share2, Calendar, AlertTriangle, ArrowRight, ChevronRight } from 'lucide-react';
+import { Plus, ShoppingCart, ScanLine, Share2, Calendar, AlertTriangle, ArrowRight, ChevronRight, Menu } from 'lucide-react';
 import { useState } from 'react';
 import { TabId } from '@/types';
 
@@ -8,6 +8,7 @@ interface HomePageProps {
   daysLeft: number;
   isTrial: boolean;
   onNavigate: (tab: TabId) => void;
+  onOpenMenu?: () => void;
 }
 
 const container = {

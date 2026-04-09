@@ -1,19 +1,19 @@
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
-import { monthlySpending, categorySpending, getHistory } from '@/data/mockData';
+import { getHistory } from '@/data/mockData';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { TrendingUp, BarChart3, ShoppingCart, Clock, Calendar } from 'lucide-react';
 
 const CATEGORY_COLORS = [
-  'hsl(152, 60%, 42%)',  // Alimentos - green
-  'hsl(38, 90%, 50%)',   // Carnes - orange
-  'hsl(210, 70%, 50%)',  // Limpeza - blue
-  'hsl(340, 60%, 55%)',  // Laticínios - pink
-  'hsl(270, 50%, 55%)',  // Higiene - purple
-  'hsl(0, 70%, 50%)',    // Bebidas - red
-  'hsl(190, 70%, 45%)',  // Hortifruti - teal
-  'hsl(25, 80%, 55%)',   // Padaria - dark orange
-  'hsl(160, 50%, 50%)',  // Outros - mint
+  'hsl(152, 60%, 42%)',
+  'hsl(38, 90%, 50%)',
+  'hsl(210, 70%, 50%)',
+  'hsl(340, 60%, 55%)',
+  'hsl(270, 50%, 55%)',
+  'hsl(0, 70%, 50%)',
+  'hsl(190, 70%, 45%)',
+  'hsl(25, 80%, 55%)',
+  'hsl(160, 50%, 50%)',
 ];
 
 interface ReportsPageProps {
@@ -36,11 +36,30 @@ export function ReportsPage({ onBack }: ReportsPageProps) {
   }, {});
   const totalVisits = Object.values(storeVisits).reduce((a, b) => a + b, 0);
 
-  const enrichedCategories = categorySpending.map((c, i) => ({
-    ...c,
+  // Derive category spending from history
+  const categoryTotals = history.reduce<Record<string, number>>((acc, h) => {
+    acc[h.category] = (acc[h.category] || 0) + h.total_price;
+    return acc;
+  }, {});
+  const categoryData = Object.entries(categoryTotals).map(([name, value], i) => ({
+    name,
+    value,
     fill: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
-    percent: ((c.value / categorySpending.reduce((s, x) => s + x.value, 0)) * 100).toFixed(1),
   }));
+  const catTotal = categoryData.reduce((s, c) => s + c.value, 0);
+  const enrichedCategories = categoryData.map(c => ({
+    ...c,
+    percent: catTotal > 0 ? ((c.value / catTotal) * 100).toFixed(1) : '0',
+  }));
+
+  // Derive monthly spending from history
+  const monthlyTotals = history.reduce<Record<string, number>>((acc, h) => {
+    const d = new Date(h.purchase_date);
+    const key = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+    acc[key] = (acc[key] || 0) + h.total_price;
+    return acc;
+  }, {});
+  const monthlySpending = Object.entries(monthlyTotals).map(([month, value]) => ({ month, value }));
 
   return (
     <div className="pb-20">
@@ -82,77 +101,81 @@ export function ReportsPage({ onBack }: ReportsPageProps) {
         </div>
 
         {/* Monthly Evolution Bar Chart */}
-        <div className="bg-card rounded-xl border border-border p-4">
-          <h3 className="text-sm font-bold text-foreground mb-1">Evolução Mensal</h3>
-          <p className="text-xs text-muted-foreground mb-3">Últimos {monthlySpending.length} meses</p>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={monthlySpending}>
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(160,10%,45%)' }} axisLine={true} tickLine={false} />
-              <YAxis
-                tick={{ fontSize: 10, fill: 'hsl(160,10%,45%)' }}
-                axisLine={true}
-                tickLine={false}
-                tickFormatter={(v) => `R$${v}`}
-              />
-              <Tooltip
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                formatter={(v: number) => [`R$ ${v}`, 'Gasto']}
-              />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(152, 60%, 42%)" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        {monthlySpending.length > 0 && (
+          <div className="bg-card rounded-xl border border-border p-4">
+            <h3 className="text-sm font-bold text-foreground mb-1">Evolução Mensal</h3>
+            <p className="text-xs text-muted-foreground mb-3">Últimos {monthlySpending.length} meses</p>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={monthlySpending}>
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(160,10%,45%)' }} axisLine={true} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: 'hsl(160,10%,45%)' }} axisLine={true} tickLine={false} tickFormatter={(v) => `R$${v}`} />
+                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} formatter={(v: number) => [`R$ ${v}`, 'Gasto']} />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(152, 60%, 42%)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {monthlySpending.length === 0 && (
+          <div className="bg-card rounded-xl border border-border p-4 text-center">
+            <p className="text-sm text-muted-foreground">Sem dados de compras para exibir evolução mensal.</p>
+          </div>
+        )}
 
         {/* Donut Chart */}
-        <div className="bg-card rounded-xl border border-border p-4">
-          <h3 className="text-sm font-bold text-foreground mb-4">Gastos por Categoria</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie
-                data={enrichedCategories}
-                cx="50%"
-                cy="50%"
-                innerRadius={55}
-                outerRadius={85}
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {enrichedCategories.map((entry, i) => (
-                  <Cell key={i} fill={entry.fill} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(v: number) => [`R$ ${v.toFixed(2)}`, '']} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="mt-4 space-y-2">
-            {enrichedCategories.map(c => (
-              <div key={c.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: c.fill }} />
-                  <span className="text-sm text-foreground">{c.name}</span>
+        {enrichedCategories.length > 0 ? (
+          <div className="bg-card rounded-xl border border-border p-4">
+            <h3 className="text-sm font-bold text-foreground mb-4">Gastos por Categoria</h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie data={enrichedCategories} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={2} dataKey="value">
+                  {enrichedCategories.map((entry, i) => (
+                    <Cell key={i} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(v: number) => [`R$ ${v.toFixed(2)}`, '']} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="mt-4 space-y-2">
+              {enrichedCategories.map(c => (
+                <div key={c.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: c.fill }} />
+                    <span className="text-sm text-foreground">{c.name}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-bold text-foreground">{c.percent}%</span>
+                    <span className="text-sm text-muted-foreground">R$ {c.value.toFixed(2)}</span>
+                  </div>
                 </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-card rounded-xl border border-border p-4 text-center">
+            <p className="text-sm text-muted-foreground">Sem dados de categorias para exibir.</p>
+          </div>
+        )}
+
+        {/* Top Products */}
+        {topProducts.length > 0 ? (
+          <div className="bg-card rounded-xl border border-border p-4">
+            <h3 className="text-sm font-bold text-foreground mb-3">Mais Comprados</h3>
+            {topProducts.map(([name, count], i) => (
+              <div key={name} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-bold text-foreground">{c.percent}%</span>
-                  <span className="text-sm text-muted-foreground">R$ {c.value.toFixed(2)}</span>
+                  <span className="text-xs font-bold text-primary bg-accent w-6 h-6 rounded flex items-center justify-center">{i + 1}</span>
+                  <span className="text-sm font-medium text-foreground uppercase">{name}</span>
                 </div>
+                <span className="text-sm font-medium text-muted-foreground">{count}x</span>
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Top Products */}
-        <div className="bg-card rounded-xl border border-border p-4">
-          <h3 className="text-sm font-bold text-foreground mb-3">Mais Comprados</h3>
-          {topProducts.map(([name, count], i) => (
-            <div key={name} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-primary bg-accent w-6 h-6 rounded flex items-center justify-center">{i + 1}</span>
-                <span className="text-sm font-medium text-foreground uppercase">{name}</span>
-              </div>
-              <span className="text-sm font-medium text-muted-foreground">{count}x</span>
-            </div>
-          ))}
-        </div>
+        ) : (
+          <div className="bg-card rounded-xl border border-border p-4 text-center">
+            <p className="text-sm text-muted-foreground">Sem produtos no histórico.</p>
+          </div>
+        )}
       </motion.div>
     </div>
   );

@@ -24,13 +24,13 @@ export function ReportsPage({ onBack }: ReportsPageProps) {
   const history = getHistory();
   const currentMonth = history.reduce((sum, h) => sum + h.total_price, 0);
 
-  const productCounts = mockHistory.reduce<Record<string, number>>((acc, h) => {
+  const productCounts = history.reduce<Record<string, number>>((acc, h) => {
     acc[h.product_name] = (acc[h.product_name] || 0) + h.quantity;
     return acc;
   }, {});
   const topProducts = Object.entries(productCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-  const storeVisits = mockHistory.reduce<Record<string, number>>((acc, h) => {
+  const storeVisits = history.reduce<Record<string, number>>((acc, h) => {
     acc[h.store_name] = (acc[h.store_name] || 0) + 1;
     return acc;
   }, {});

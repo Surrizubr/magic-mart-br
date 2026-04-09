@@ -23,9 +23,10 @@ const categories = [
 
 interface ShoppingPageProps {
   onNavigate: (tab: TabId) => void;
+  onBack?: () => void;
 }
 
-export function ShoppingPage({ onNavigate }: ShoppingPageProps) {
+export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
   const [mode, setMode] = useState<ShoppingMode>(null);
   const [storeName, setStoreName] = useState('');
   const [storeSet, setStoreSet] = useState(false);

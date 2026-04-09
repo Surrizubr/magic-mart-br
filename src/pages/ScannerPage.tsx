@@ -9,7 +9,11 @@ import Tesseract from 'tesseract.js';
 type ScanMode = 'choose' | 'single' | 'multi';
 type ScanStep = 'capture' | 'processing' | 'results';
 
-export function ScannerPage() {
+interface ScannerPageProps {
+  onBack?: () => void;
+}
+
+export function ScannerPage({ onBack }: ScannerPageProps) {
   const [mode, setMode] = useState<ScanMode>('choose');
   const [step, setStep] = useState<ScanStep>('capture');
   const [images, setImages] = useState<string[]>([]);

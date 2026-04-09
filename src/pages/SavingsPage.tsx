@@ -1,30 +1,23 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
-import { ArrowLeft, AlertTriangle, Info } from 'lucide-react';
+import { getHistory } from '@/data/mockData';
+import { AlertTriangle, Info } from 'lucide-react';
 
 const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-const weekData = [0, 0, 0, 1, 1, 1, 1]; // 0 = no purchases, 1 = has purchases
 
-const monthData = Array.from({ length: 31 }, (_, i) => {
-  if (i < 4) return { day: i + 1, level: i === 0 ? 0 : Math.floor(Math.random() * 3) + 1 };
-  return { day: i + 1, level: 0 };
-});
-
-// Colors: 0=muito barato(dark green), 1=barato(light green), 2=normal(yellow), 3=caro(orange), 4=muito caro(red)
 function getLevelColor(level: number) {
   switch (level) {
-    case 0: return 'bg-primary/20'; // no data / muito barato
-    case 1: return 'bg-destructive/60'; // caro (has purchase)
-    case 2: return 'bg-warning/60'; // normal
-    case 3: return 'bg-primary/40'; // barato
+    case 0: return 'bg-primary/20';
+    case 1: return 'bg-destructive/60';
+    case 2: return 'bg-warning/60';
+    case 3: return 'bg-primary/40';
     default: return 'bg-primary/20';
   }
 }
 
 function getWeekColor(val: number) {
-  if (val === 0) return 'bg-primary/30'; // sem compra = barato
-  return 'bg-warning'; // com compra = normal/caro
+  if (val === 0) return 'bg-primary/30';
+  return 'bg-warning';
 }
 
 interface SavingsPageProps {
@@ -32,6 +25,32 @@ interface SavingsPageProps {
 }
 
 export function SavingsPage({ onBack }: SavingsPageProps) {
+  const history = getHistory();
+
+  // Derive weekly heatmap from history (count purchases per weekday)
+  const weekData = [0, 0, 0, 0, 0, 0, 0];
+  history.forEach(h => {
+    const d = new Date(h.purchase_date);
+    const day = (d.getDay() + 6) % 7; // Mon=0 ... Sun=6
+    weekData[day]++;
+  });
+
+  // Derive monthly heatmap from history (count purchases per day of month)
+  const monthMap: Record<number, number> = {};
+  history.forEach(h => {
+    const d = new Date(h.purchase_date);
+    const day = d.getDate();
+    monthMap[day] = (monthMap[day] || 0) + 1;
+  });
+  const monthData = Array.from({ length: 31 }, (_, i) => {
+    const count = monthMap[i + 1] || 0;
+    let level = 0;
+    if (count >= 3) level = 1; // muito caro
+    else if (count === 2) level = 2; // normal
+    else if (count === 1) level = 3; // barato
+    return { day: i + 1, level };
+  });
+
   return (
     <div className="pb-20">
       <PageHeader
@@ -80,7 +99,7 @@ export function SavingsPage({ onBack }: SavingsPageProps) {
             <span className="text-xs text-muted-foreground">Normal</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded bg-orange-400" />
+            <div className="w-4 h-4 rounded bg-destructive/40" />
             <span className="text-xs text-muted-foreground">Caro</span>
           </div>
           <div className="flex items-center gap-1.5">

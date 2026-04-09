@@ -12,6 +12,7 @@ import { HistoryPage } from '@/pages/HistoryPage';
 import { ReportsPage } from '@/pages/ReportsPage';
 import { ScannerPage } from '@/pages/ScannerPage';
 import { ShoppingPage } from '@/pages/ShoppingPage';
+import { SharePage } from '@/pages/SharePage';
 import { TabId } from '@/types';
 
 const Index = () => {
@@ -35,6 +36,7 @@ const Index = () => {
       case 'reports': return <ReportsPage onBack={goHome} />;
       case 'scanner': return <ScannerPage onBack={goHome} />;
       case 'shopping': return <ShoppingPage onNavigate={setActiveTab} onBack={goHome} />;
+      case 'share': return <SharePage onBack={goHome} />;
     }
   };
 

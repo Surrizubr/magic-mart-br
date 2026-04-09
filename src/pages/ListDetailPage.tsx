@@ -4,14 +4,14 @@ import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ShoppingList, ShoppingListItem } from '@/types';
-import { ArrowLeft, Plus, ShoppingCart, CheckCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, ShoppingCart, CheckCircle, Trash2, MapPin, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ListDetailPageProps {
   list: ShoppingList;
   onBack: () => void;
   onUpdateList: (list: ShoppingList) => void;
-  onFinishShopping: (list: ShoppingList, checkedItems: ShoppingListItem[]) => void;
+  onFinishShopping: (list: ShoppingList, checkedItems: ShoppingListItem[], storeName: string) => void;
 }
 
 export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }: ListDetailPageProps) {
@@ -22,6 +22,9 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
   const [newUnit, setNewUnit] = useState('un');
   const [newPrice, setNewPrice] = useState('');
   const [shoppingMode, setShoppingMode] = useState(list.status === 'shopping');
+  const [showStoreDialog, setShowStoreDialog] = useState(false);
+  const [storeName, setStoreName] = useState('');
+  const [geoLoading, setGeoLoading] = useState(false);
 
   useEffect(() => {
     const updatedList: ShoppingList = {
@@ -83,16 +86,61 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
     toast.info('Selecione os itens comprados e clique em "Encerrar Compras".');
   };
 
-  const handleEncerrar = () => {
+  const handleEncerrarClick = () => {
     const checkedItems = items.filter(i => i.is_checked);
-    const uncheckedItems = items.filter(i => !i.is_checked);
-
     if (checkedItems.length === 0) {
       toast.warning('Selecione pelo menos um item antes de encerrar.');
       return;
     }
+    setShowStoreDialog(true);
+  };
 
-    onFinishShopping(list, checkedItems);
+  const handleGeoLocation = () => {
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&addressdetails=1`,
+            { headers: { 'Accept-Language': 'pt-BR' } }
+          );
+          const data = await res.json();
+          const addr = data.address || {};
+          const road = addr.road || addr.pedestrian || addr.street || '';
+          const number = addr.house_number || '';
+          const shop = addr.shop || addr.supermarket || addr.building || addr.commercial || '';
+          let name = '';
+          if (shop) name = shop + ' - ';
+          name += road;
+          if (number) name += ', ' + number;
+          if (!name.trim()) name = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+          setStoreName(name.trim());
+          toast.success('Localização obtida!');
+        } catch {
+          setStoreName(`${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`);
+          toast.info('Coordenadas salvas (sem acesso à internet para nome da rua).');
+        }
+        setGeoLoading(false);
+      },
+      () => {
+        setGeoLoading(false);
+        toast.error('Não foi possível obter localização.');
+      },
+      { enableHighAccuracy: true }
+    );
+  };
+
+  const confirmEncerrar = () => {
+    if (!storeName.trim()) {
+      toast.error('Informe o local de compras.');
+      return;
+    }
+    const checkedItems = items.filter(i => i.is_checked);
+    const uncheckedItems = items.filter(i => !i.is_checked);
+
+    onFinishShopping(list, checkedItems, storeName.trim());
+    setShowStoreDialog(false);
+    setStoreName('');
 
     if (uncheckedItems.length === 0) {
       const updatedList: ShoppingList = {
@@ -262,7 +310,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
               ⚠️ Ao encerrar, os itens selecionados serão transferidos para o estoque.
             </p>
             <Button
-              onClick={handleEncerrar}
+              onClick={handleEncerrarClick}
               className="w-full bg-amber-600 hover:bg-amber-700 text-primary-foreground border-0 h-12 text-base font-semibold"
             >
               <CheckCircle className="w-5 h-5 mr-2" />
@@ -270,6 +318,53 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
             </Button>
           </div>
         )}
+
+        {/* Store location dialog */}
+        <AnimatePresence>
+          {showStoreDialog && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+              onClick={() => setShowStoreDialog(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={e => e.stopPropagation()}
+                className="bg-card rounded-xl border border-border p-5 w-full max-w-sm space-y-4 shadow-xl"
+              >
+                <h3 className="text-base font-bold text-card-foreground">Local de Compras</h3>
+                <p className="text-xs text-muted-foreground">Informe onde você fez as compras:</p>
+                <input
+                  value={storeName}
+                  onChange={e => setStoreName(e.target.value)}
+                  placeholder="Ex: Supermercado Extra"
+                  className="w-full p-3 rounded-lg border border-border bg-background text-foreground text-sm outline-none focus:ring-2 ring-primary/30"
+                  autoFocus
+                />
+                <button
+                  onClick={handleGeoLocation}
+                  disabled={geoLoading}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary text-secondary-foreground text-xs font-medium w-full justify-center"
+                >
+                  {geoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+                  {geoLoading ? 'Obtendo endereço...' : 'Usar minha localização'}
+                </button>
+                <div className="flex gap-2 pt-1">
+                  <Button onClick={confirmEncerrar} className="flex-1 gradient-primary text-primary-foreground border-0">
+                    Confirmar
+                  </Button>
+                  <Button variant="ghost" onClick={() => setShowStoreDialog(false)} className="flex-1">
+                    Cancelar
+                  </Button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

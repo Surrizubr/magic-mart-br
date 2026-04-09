@@ -13,6 +13,7 @@ import { SavingsPage } from '@/pages/SavingsPage';
 import { HistoryPage } from '@/pages/HistoryPage';
 import { ReportsPage } from '@/pages/ReportsPage';
 import { ScannerPage } from '@/pages/ScannerPage';
+import { ShoppingPage } from '@/pages/ShoppingPage';
 import { TabId } from '@/types';
 
 const Index = () => {
@@ -48,6 +49,7 @@ const Index = () => {
       case 'history': return <HistoryPage onNavigateToScanner={() => setActiveTab('scanner')} />;
       case 'reports': return <ReportsPage />;
       case 'scanner': return <ScannerPage />;
+      case 'shopping': return <ShoppingPage onNavigate={setActiveTab} />;
     }
   };
 

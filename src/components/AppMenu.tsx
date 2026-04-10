@@ -36,7 +36,7 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate('/login');
+    navigate('/');
     onClose();
   };
 
@@ -51,7 +51,7 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
     // In a real app, call an edge function to delete the user
     await supabase.auth.signOut();
     setConfirmDelete(false);
-    navigate('/login');
+    navigate('/');
     onClose();
   };
 

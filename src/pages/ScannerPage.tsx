@@ -214,8 +214,8 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
         />
         <div className="p-4 space-y-4">
           {/* Store & date info */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-card rounded-lg shadow-card p-4">
-            <div className="flex items-center gap-2 mb-2">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-card rounded-lg shadow-card p-4 space-y-3">
+            <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-primary" />
               <input
                 value={result.store_name}
@@ -223,13 +223,35 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
                 className="text-sm font-semibold text-card-foreground bg-transparent outline-none flex-1 border-b border-transparent focus:border-primary/30"
               />
             </div>
-            <div className="flex items-center justify-between">
+
+            {/* Date confirmation */}
+            <div className="bg-secondary/50 rounded-lg p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-foreground">📅 Data da compra:</span>
+                {result.date === new Date().toISOString().slice(0, 10) ? (
+                  <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium">
+                    Data não encontrada no cupom
+                  </span>
+                ) : (
+                  <span className="text-[10px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded font-medium">
+                    Extraída do cupom — confirme abaixo
+                  </span>
+                )}
+              </div>
               <input
                 type="date"
                 value={result.date}
                 onChange={e => setResult({ ...result, date: e.target.value })}
-                className="text-xs text-muted-foreground bg-transparent outline-none"
+                className="w-full p-2 rounded-lg border border-border bg-background text-foreground text-sm outline-none focus:ring-2 ring-primary/30"
               />
+              <p className="text-[10px] text-muted-foreground">
+                {result.date === new Date().toISOString().slice(0, 10)
+                  ? 'Não foi possível extrair a data. Por favor, insira a data de compra.'
+                  : 'Verifique se a data está correta e ajuste se necessário.'}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end">
               <p className="text-lg font-bold text-primary">R$ {result.total.toFixed(2)}</p>
             </div>
           </motion.div>

@@ -38,6 +38,7 @@ export function HistoryPage({ onNavigateToScanner, onBack }: HistoryPageProps) {
   // State for edit address dialog
   const [editingStore, setEditingStore] = useState<{ store: string; date: string } | null>(null);
   const [editAddress, setEditAddress] = useState('');
+  const [editDate, setEditDate] = useState('');
   const [geoLoading, setGeoLoading] = useState(false);
 
   const grouped = history.reduce<Record<string, typeof history>>((acc, h) => {
@@ -48,6 +49,7 @@ export function HistoryPage({ onNavigateToScanner, onBack }: HistoryPageProps) {
   const handleEditAddress = (store: string, date: string) => {
     setEditingStore({ store, date });
     setEditAddress(store);
+    setEditDate(date);
   };
 
   const handleGeolocate = async () => {
@@ -140,7 +142,7 @@ export function HistoryPage({ onNavigateToScanner, onBack }: HistoryPageProps) {
                           onClick={() => handleEditAddress(store, date)}
                           className="text-[10px] text-muted-foreground flex items-center gap-0.5 ml-2 hover:text-primary transition-colors"
                         >
-                          Editar endereço <Pencil className="w-2.5 h-2.5" />
+                          Editar <Pencil className="w-2.5 h-2.5" />
                         </button>
                       </div>
                       <span className="text-xs font-medium text-muted-foreground">R$ {storeTotal.toFixed(2)}</span>
@@ -196,6 +198,7 @@ export function HistoryPage({ onNavigateToScanner, onBack }: HistoryPageProps) {
             <DialogTitle className="text-base">Editar Endereço</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
+            <label className="text-xs font-medium text-foreground">Local</label>
             <div className="flex gap-2">
               <Input
                 value={editAddress}
@@ -216,6 +219,13 @@ export function HistoryPage({ onNavigateToScanner, onBack }: HistoryPageProps) {
             {geoLoading && (
               <p className="text-xs text-muted-foreground">Obtendo localização...</p>
             )}
+            <label className="text-xs font-medium text-foreground">Data da compra</label>
+            <Input
+              type="date"
+              value={editDate}
+              onChange={(e) => setEditDate(e.target.value)}
+              className="text-sm"
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingStore(null)}>Cancelar</Button>

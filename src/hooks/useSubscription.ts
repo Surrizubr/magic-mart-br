@@ -1,55 +1,89 @@
-import { useState, useEffect } from 'react';
-import { SubscriptionStatus } from '@/types';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
+
+export type SubStatus = 'loading' | 'trial' | 'active' | 'expired' | 'no_trial';
 
 const TRIAL_DAYS = 7;
-const FIRST_OPEN_KEY = 'app_first_open';
-const TRIAL_STARTED_KEY = 'app_trial_started';
 
 export function useSubscription() {
-  const [status, setStatus] = useState<SubscriptionStatus>('not_started');
+  const { user } = useAuth();
+  const [status, setStatus] = useState<SubStatus>('loading');
   const [daysLeft, setDaysLeft] = useState(0);
+  const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
 
-  useEffect(() => {
-    checkStatus();
-  }, []);
-
-  const checkStatus = () => {
-    const firstOpen = localStorage.getItem(FIRST_OPEN_KEY);
-    if (!firstOpen) {
-      setStatus('not_started');
+  const checkSubscription = useCallback(async () => {
+    if (!user) {
+      setStatus('loading');
       return;
     }
 
-    const trialStarted = localStorage.getItem(TRIAL_STARTED_KEY);
-    if (trialStarted) {
-      const start = new Date(trialStarted);
-      const now = new Date();
-      const diff = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-      const remaining = TRIAL_DAYS - diff;
-      if (remaining > 0) {
-        setStatus('trial');
-        setDaysLeft(remaining);
+    // Check Stripe subscription
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      if (!error && data?.subscribed) {
+        setStatus('active');
+        setSubscriptionEnd(data.subscription_end);
         return;
       }
-      setStatus('login_required');
-      return;
+    } catch {
+      // Continue to trial check
     }
 
-    setStatus('not_started');
-  };
+    // Check trial based on profile's trial_started_at
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('trial_started_at')
+        .eq('user_id', user.id)
+        .single();
 
-  const startTrial = () => {
-    const now = new Date().toISOString();
-    localStorage.setItem(FIRST_OPEN_KEY, now);
-    localStorage.setItem(TRIAL_STARTED_KEY, now);
+      if (profile?.trial_started_at) {
+        const start = new Date(profile.trial_started_at);
+        const now = new Date();
+        const diff = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        const remaining = TRIAL_DAYS - diff;
+        if (remaining > 0) {
+          setStatus('trial');
+          setDaysLeft(remaining);
+          return;
+        }
+        setStatus('expired');
+        return;
+      }
+    } catch {
+      // Fallback
+    }
+
     setStatus('trial');
     setDaysLeft(TRIAL_DAYS);
+  }, [user]);
+
+  useEffect(() => {
+    checkSubscription();
+    const interval = setInterval(checkSubscription, 60000);
+    return () => clearInterval(interval);
+  }, [checkSubscription]);
+
+  const openCheckout = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout');
+      if (error) throw error;
+      if (data?.url) window.open(data.url, '_blank');
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+    }
   };
 
-  const skipToApp = () => {
-    // For demo: go directly to active
-    startTrial();
+  const openPortal = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      if (error) throw error;
+      if (data?.url) window.open(data.url, '_blank');
+    } catch (err: any) {
+      console.error('Portal error:', err);
+    }
   };
 
-  return { status, daysLeft, startTrial, skipToApp };
+  return { status, daysLeft, subscriptionEnd, openCheckout, openPortal, refresh: checkSubscription };
 }

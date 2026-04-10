@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { lovable } from '@/integrations/lovable/index';
 import { toast } from 'sonner';
 
 export function LoginPage() {
-  const { t } = useLanguage();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,11 +30,13 @@ export function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
     });
-    if (error) toast.error(error.message);
+    if (result.error) {
+      toast.error(result.error instanceof Error ? result.error.message : 'Erro ao fazer login com Google');
+    }
+    if (result.redirected) return;
   };
 
   return (
@@ -50,7 +51,7 @@ export function LoginPage() {
             <span className="text-3xl">🌿</span>
           </div>
           <h1 className="text-2xl font-bold text-foreground">Magicmart AI</h1>
-          <p className="text-sm text-muted-foreground">{t('developedBy')}</p>
+          <p className="text-sm text-muted-foreground">Sua despensa inteligente</p>
         </div>
 
         <button
@@ -63,7 +64,7 @@ export function LoginPage() {
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
           </svg>
-          <span className="text-sm font-medium text-foreground">{t('loginWithGoogle')}</span>
+          <span className="text-sm font-medium text-foreground">Entrar com Google</span>
         </button>
 
         <div className="flex items-center gap-3">
@@ -75,7 +76,7 @@ export function LoginPage() {
         <form onSubmit={handleEmailAuth} className="space-y-3">
           <input
             type="email"
-            placeholder={t('email')}
+            placeholder="E-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -83,7 +84,7 @@ export function LoginPage() {
           />
           <input
             type="password"
-            placeholder={t('password')}
+            placeholder="Senha"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -95,14 +96,14 @@ export function LoginPage() {
             disabled={loading}
             className="w-full p-3 rounded-xl gradient-primary text-primary-foreground text-sm font-bold disabled:opacity-50"
           >
-            {loading ? '...' : isSignUp ? t('signUp') : t('login')}
+            {loading ? '...' : isSignUp ? 'Criar conta' : 'Entrar'}
           </button>
         </form>
 
         <p className="text-center text-xs text-muted-foreground">
-          {isSignUp ? t('hasAccount') : t('noAccount')}{' '}
+          {isSignUp ? 'Já tem conta?' : 'Não tem conta?'}{' '}
           <button onClick={() => setIsSignUp(!isSignUp)} className="text-primary font-medium">
-            {isSignUp ? t('login') : t('signUp')}
+            {isSignUp ? 'Entrar' : 'Criar conta'}
           </button>
         </p>
       </motion.div>

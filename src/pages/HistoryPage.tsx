@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getHistory } from '@/data/mockData';
-import { MapPin, ScanLine, Clock, Pencil } from 'lucide-react';
+import { MapPin, ScanLine, Clock, Pencil, LocateFixed, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 const categoryColors: Record<string, string> = {
   'Grãos': 'bg-accent text-accent-foreground',
@@ -32,10 +35,50 @@ export function HistoryPage({ onNavigateToScanner, onBack }: HistoryPageProps) {
   const history = getHistory();
   const totalMonth = history.reduce((sum, h) => sum + h.total_price, 0);
 
+  // State for edit address dialog
+  const [editingStore, setEditingStore] = useState<{ store: string; date: string } | null>(null);
+  const [editAddress, setEditAddress] = useState('');
+  const [geoLoading, setGeoLoading] = useState(false);
+
   const grouped = history.reduce<Record<string, typeof history>>((acc, h) => {
     (acc[h.purchase_date] ||= []).push(h);
     return acc;
   }, {});
+
+  const handleEditAddress = (store: string, date: string) => {
+    setEditingStore({ store, date });
+    setEditAddress(store);
+  };
+
+  const handleGeolocate = async () => {
+    if (!navigator.geolocation) return;
+    setGeoLoading(true);
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true })
+      );
+      const { latitude: lat, longitude: lon } = pos.coords;
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1&zoom=18`
+      );
+      const data = await res.json();
+      const addr = data.address || {};
+      const commerce = addr.shop || addr.supermarket || addr.mall || addr.marketplace || addr.retail || '';
+      const road = addr.road || '';
+      const number = addr.house_number || '';
+      const parts = [commerce, road, number].filter(Boolean);
+      setEditAddress(parts.join(', ') || `${lat.toFixed(5)}, ${lon.toFixed(5)}`);
+    } catch {
+      // fallback
+    } finally {
+      setGeoLoading(false);
+    }
+  };
+
+  const handleSaveAddress = () => {
+    // In a real app, persist the updated store name/address
+    setEditingStore(null);
+  };
 
   return (
     <div className="pb-20">
@@ -93,12 +136,29 @@ export function HistoryPage({ onNavigateToScanner, onBack }: HistoryPageProps) {
                       <div className="flex items-center gap-1.5">
                         <MapPin className="w-3.5 h-3.5 text-primary" />
                         <span className="text-xs font-bold text-foreground uppercase">{store}</span>
-                        <button className="text-[10px] text-muted-foreground flex items-center gap-0.5 ml-2">
+                        <button
+                          onClick={() => handleEditAddress(store, date)}
+                          className="text-[10px] text-muted-foreground flex items-center gap-0.5 ml-2 hover:text-primary transition-colors"
+                        >
                           Editar endereço <Pencil className="w-2.5 h-2.5" />
                         </button>
                       </div>
                       <span className="text-xs font-medium text-muted-foreground">R$ {storeTotal.toFixed(2)}</span>
                     </div>
+
+                    {/* Scan banner */}
+                    {onNavigateToScanner && (
+                      <button
+                        onClick={onNavigateToScanner}
+                        className="w-full flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2 text-left"
+                      >
+                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span className="text-[11px] text-amber-800">
+                          Escaneie o cupom fiscal desta compra para completar informações faltantes
+                        </span>
+                        <ScanLine className="w-4 h-4 text-amber-600 shrink-0 ml-auto" />
+                      </button>
+                    )}
 
                     {/* Items */}
                     <div className="space-y-2">
@@ -128,6 +188,41 @@ export function HistoryPage({ onNavigateToScanner, onBack }: HistoryPageProps) {
           );
         })}
       </motion.div>
+
+      {/* Edit Address Dialog */}
+      <Dialog open={!!editingStore} onOpenChange={(open) => !open && setEditingStore(null)}>
+        <DialogContent className="max-w-[90vw] rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-base">Editar Endereço</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                value={editAddress}
+                onChange={(e) => setEditAddress(e.target.value)}
+                placeholder="Nome do local ou endereço"
+                className="flex-1 text-sm"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleGeolocate}
+                disabled={geoLoading}
+                className="shrink-0"
+              >
+                <LocateFixed className={`w-4 h-4 ${geoLoading ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+            {geoLoading && (
+              <p className="text-xs text-muted-foreground">Obtendo localização...</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingStore(null)}>Cancelar</Button>
+            <Button onClick={handleSaveAddress}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
-import { TrialWelcome } from '@/components/TrialWelcome';
+import { LoginPage } from '@/pages/LoginPage';
+import { TrialBanner } from '@/components/TrialBanner';
+import { PremiumBanner } from '@/components/PremiumBanner';
 import { BottomNav } from '@/components/BottomNav';
 import { AppMenu } from '@/components/AppMenu';
 import { HomePage } from '@/pages/HomePage';
@@ -16,19 +19,32 @@ import { SharePage } from '@/pages/SharePage';
 import { TabId } from '@/types';
 
 const Index = () => {
-  const { status, daysLeft, startTrial } = useSubscription();
+  const { user, loading: authLoading } = useAuth();
+  const { status, daysLeft, openCheckout } = useSubscription();
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [menuOpen, setMenuOpen] = useState(false);
 
-  if (status === 'not_started') {
-    return <TrialWelcome onStartTrial={startTrial} />;
+  // Show loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-12 h-12 rounded-full gradient-primary animate-pulse" />
+      </div>
+    );
+  }
+
+  // Show login if not authenticated
+  if (!user) {
+    return <LoginPage />;
   }
 
   const goHome = () => setActiveTab('home');
+  const isTrial = status === 'trial';
+  const showBanners = status === 'trial' || status === 'expired';
 
   const renderPage = () => {
     switch (activeTab) {
-      case 'home': return <HomePage daysLeft={daysLeft} isTrial={status === 'trial'} onNavigate={setActiveTab} onOpenMenu={() => setMenuOpen(true)} />;
+      case 'home': return <HomePage daysLeft={daysLeft} isTrial={isTrial} onNavigate={setActiveTab} onOpenMenu={() => setMenuOpen(true)} />;
       case 'lists': return <ListsPage onBack={goHome} />;
       case 'stock': return <StockPage onBack={goHome} />;
       case 'savings': return <SavingsPage onBack={goHome} />;
@@ -53,6 +69,15 @@ const Index = () => {
           {renderPage()}
         </motion.div>
       </AnimatePresence>
+
+      {/* Banners above bottom nav */}
+      {showBanners && (
+        <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto z-40">
+          <PremiumBanner onUpgrade={openCheckout} />
+          {isTrial && <TrialBanner daysLeft={daysLeft} onUpgrade={openCheckout} />}
+        </div>
+      )}
+
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       <AppMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
     </div>

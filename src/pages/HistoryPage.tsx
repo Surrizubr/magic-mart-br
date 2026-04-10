@@ -142,7 +142,7 @@ export function HistoryPage({ onNavigateToScanner, onBack }: HistoryPageProps) {
                           onClick={() => handleEditAddress(store, date)}
                           className="text-[10px] text-muted-foreground flex items-center gap-0.5 ml-2 hover:text-primary transition-colors"
                         >
-                          Editar endereço <Pencil className="w-2.5 h-2.5" />
+                          Editar <Pencil className="w-2.5 h-2.5" />
                         </button>
                       </div>
                       <span className="text-xs font-medium text-muted-foreground">R$ {storeTotal.toFixed(2)}</span>

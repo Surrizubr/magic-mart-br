@@ -70,9 +70,9 @@ const Index = () => {
         </motion.div>
       </AnimatePresence>
 
-      {/* Banners above bottom nav */}
-      {showBanners && (
-        <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto z-40">
+      {/* Banners inline at the bottom of content, before bottom nav padding */}
+      {showBanners && activeTab === 'home' && (
+        <div className="pb-20 px-0">
           <PremiumBanner onUpgrade={openCheckout} />
           {isTrial && <TrialBanner daysLeft={daysLeft} onUpgrade={openCheckout} />}
         </div>

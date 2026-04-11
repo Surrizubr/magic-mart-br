@@ -440,7 +440,16 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-bold text-foreground">R$ {item.total_price.toFixed(2)}</span>
+                        <div className="text-right">
+                          {item.discount_amount > 0 ? (
+                            <>
+                              <span className="text-xs text-muted-foreground line-through block">R$ {item.total_price.toFixed(2)}</span>
+                              <span className="text-sm font-bold text-green-600">R$ {item.discounted_price.toFixed(2)}</span>
+                            </>
+                          ) : (
+                            <span className="text-sm font-bold text-foreground">R$ {item.total_price.toFixed(2)}</span>
+                          )}
+                        </div>
                         <button onClick={() => setEditingItem(item.id)} className="text-muted-foreground hover:text-primary p-0.5">
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
@@ -448,6 +457,7 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
+                    </div>
                     </div>
                   )}
                 </motion.div>

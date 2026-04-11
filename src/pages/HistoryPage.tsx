@@ -91,7 +91,10 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
     <div className="pb-20">
       <PageHeader
         title="Histórico"
-        subtitle="Suas compras anteriores"
+        subtitle={filterDate
+          ? `${filterStore || ''} — ${new Date(filterDate + 'T12:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}`
+          : "Suas compras anteriores"
+        }
         onBack={onBack}
         action={
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary text-primary text-xs font-medium">

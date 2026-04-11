@@ -29,6 +29,10 @@ export function StockPage({ onBack }: StockPageProps) {
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [stock, setStock] = useState<StockItem[]>(() => getStock());
 
+  useEffect(() => {
+    localStorage.setItem('stock_items', JSON.stringify(stock));
+  }, [stock]);
+
   const filtered = stock.filter(s => {
     if (search && !s.product_name.toLowerCase().includes(search.toLowerCase()) &&
         !s.category.toLowerCase().includes(search.toLowerCase())) return false;

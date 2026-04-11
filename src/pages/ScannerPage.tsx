@@ -377,6 +377,17 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
             )}
           </motion.div>
 
+          {/* Top save button */}
+          {!saved && result.items.length > 0 && (
+            <Button
+              onClick={handleSave}
+              className="w-full gradient-primary text-primary-foreground border-0 h-11"
+            >
+              <Package className="w-4 h-4 mr-2" />
+              Salvar no Estoque e Histórico
+            </Button>
+          )}
+
           {/* Items */}
           <div className="space-y-2">
             {result.items.map((item, i) => {

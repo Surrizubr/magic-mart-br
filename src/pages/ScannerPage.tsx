@@ -401,10 +401,29 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
                           />
                         </div>
                       </div>
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="text-[10px] text-muted-foreground">Desconto</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={item.discount_amount}
+                            onChange={e => updateItem(item.id, 'discount_amount', parseFloat(e.target.value) || 0)}
+                            className="text-xs bg-background border border-border rounded px-2 py-1.5 w-full outline-none focus:ring-2 ring-primary/30"
+                          />
+                        </div>
+                      </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-xs text-muted-foreground">
-                          Total: R$ {item.total_price.toFixed(2)}
-                        </span>
+                        <div className="space-y-0.5">
+                          <span className="text-xs text-muted-foreground">
+                            Original: R$ {item.total_price.toFixed(2)}
+                          </span>
+                          {item.discount_amount > 0 && (
+                            <span className="text-xs text-green-600 block">
+                              Com desconto: R$ {item.discounted_price.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
                         <Button size="sm" variant="ghost" onClick={() => setEditingItem(null)} className="h-7 text-xs">
                           <Check className="w-3 h-3 mr-1" /> OK
                         </Button>

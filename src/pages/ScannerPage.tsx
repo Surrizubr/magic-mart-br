@@ -147,18 +147,23 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
     const newItems = result.items.map(item => {
       if (item.id !== id) return item;
       const updated = { ...item, [field]: value };
-      // Recalculate total_price when quantity or unit_price changes
       if (field === 'quantity' || field === 'unit_price') {
         updated.total_price = Number(updated.quantity) * Number(updated.unit_price);
+        updated.discounted_price = updated.total_price - updated.discount_amount;
+      }
+      if (field === 'discount_amount') {
+        updated.discounted_price = updated.total_price - Number(value);
       }
       return updated;
     });
     const newSum = newItems.reduce((s, i) => s + i.total_price, 0);
+    const newDiscountedSum = newItems.reduce((s, i) => s + i.discounted_price, 0);
     setResult({
       ...result,
       items: newItems,
       items_sum: newSum,
-      difference: Math.abs(result.receipt_total - newSum),
+      discounted_sum: newDiscountedSum,
+      difference: Math.abs(result.receipt_total - newDiscountedSum),
     });
   };
 

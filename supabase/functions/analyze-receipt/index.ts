@@ -32,13 +32,17 @@ Retorne os dados usando a função extract_receipt_data.
 
 Regras:
 - Extraia TODOS os itens listados, sem pular nenhum.
-- Para cada item: nome do produto, quantidade, unidade (un, kg, lt, etc.), preço unitário e preço total.
+- Para cada item: nome do produto, quantidade, unidade (un, kg, lt, etc.), preço unitário e preço total ORIGINAL (antes de descontos).
 - Identifique o nome do estabelecimento (loja/mercado).
 - Identifique o endereço do estabelecimento se visível.
 - Identifique a data da compra no formato YYYY-MM-DD.
 - Identifique o valor TOTAL do cupom (geralmente no final, após "TOTAL" ou "VALOR TOTAL").
 - Calcule a soma de todos os itens e compare com o total do cupom.
 - Se houver desconto, troco, ou taxa, identifique-os separadamente.
+- DESCONTOS: Se o cupom apresentar descontos (globais ou por item), informe o valor total de desconto no campo "discount". 
+  Distribua o desconto proporcionalmente entre os itens usando o campo "discount_amount" de cada item.
+  O "discounted_price" de cada item deve ser: total_price - discount_amount.
+  A soma de todos os "discounted_price" deve ser igual ao total do cupom.
 - Categorize cada item: Grãos, Laticínios, Carnes, Frutas, Verduras, Bebidas, Padaria, Limpeza, Higiene, Temperos, Frios, Congelados, Doces, ou Outros.
 - Se múltiplas imagens forem fornecidas, elas são partes do MESMO cupom. Consolide sem duplicar itens.`;
 
@@ -81,13 +85,15 @@ Regras:
                         quantity: { type: "number" },
                         unit: { type: "string", enum: ["un", "kg", "lt", "l", "ml", "g", "pc", "pct", "cx", "dz", "mt", "m"] },
                         unit_price: { type: "number" },
-                        total_price: { type: "number" },
+                        total_price: { type: "number", description: "Preço total original (antes do desconto)" },
+                        discount_amount: { type: "number", description: "Valor de desconto aplicado neste item (0 se não houver)" },
+                        discounted_price: { type: "number", description: "Preço final após desconto (total_price - discount_amount)" },
                         category: {
                           type: "string",
                           enum: ["Grãos", "Laticínios", "Carnes", "Frutas", "Verduras", "Bebidas", "Padaria", "Limpeza", "Higiene", "Temperos", "Frios", "Congelados", "Doces", "Outros"],
                         },
                       },
-                      required: ["product_name", "quantity", "unit", "unit_price", "total_price", "category"],
+                      required: ["product_name", "quantity", "unit", "unit_price", "total_price", "discount_amount", "discounted_price", "category"],
                     },
                   },
                   receipt_total: { type: "number", description: "Valor total impresso no cupom" },

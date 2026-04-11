@@ -28,20 +28,28 @@ interface SavingsPageProps {
 }
 
 export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
-  const history = getHistory();
+  const allHistory = getHistory();
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
-  // Derive weekly heatmap from history (count purchases per weekday)
+  const now = new Date();
+  const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+  const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+
+  // Filter: weekly uses last 1 month, monthly uses last 3 months
+  const weekHistory = allHistory.filter(h => new Date(h.purchase_date) >= oneMonthAgo);
+  const monthHistory = allHistory.filter(h => new Date(h.purchase_date) >= threeMonthsAgo);
+
+  // Derive weekly heatmap (last 1 month only)
   const weekData = [0, 0, 0, 0, 0, 0, 0];
-  history.forEach(h => {
+  weekHistory.forEach(h => {
     const d = new Date(h.purchase_date);
-    const day = (d.getDay() + 6) % 7; // Mon=0 ... Sun=6
+    const day = (d.getDay() + 6) % 7;
     weekData[day]++;
   });
 
-  // Group history by day of month
+  // Group monthly history by day of month (last 3 months only)
   const dayPurchases: Record<number, PurchaseHistory[]> = {};
-  history.forEach(h => {
+  monthHistory.forEach(h => {
     const d = new Date(h.purchase_date);
     const day = d.getDate();
     (dayPurchases[day] ||= []).push(h);
@@ -58,7 +66,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
     return { day: i + 1, level, count };
   });
 
-  // Get stores for selected day
+  // Get stores for selected day, sorted by most recent first
   const selectedDayStores = selectedDay
     ? Object.entries(
         (dayPurchases[selectedDay] || []).reduce<Record<string, { total: number; count: number; date: string }>>((acc, h) => {
@@ -67,9 +75,13 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
           }
           acc[h.store_name].total += h.total_price;
           acc[h.store_name].count += 1;
+          // Keep the most recent date
+          if (h.purchase_date > acc[h.store_name].date) {
+            acc[h.store_name].date = h.purchase_date;
+          }
           return acc;
         }, {})
-      )
+      ).sort((a, b) => b[1].date.localeCompare(a[1].date))
     : [];
 
   const handleDayClick = (day: number) => {
@@ -201,12 +213,13 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
               onClick={() => setSelectedDay(null)}
             />
             <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 50 }}
-              className="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-6"
+              onClick={() => setSelectedDay(null)}
             >
-              <div className="bg-card rounded-t-2xl border-t border-border shadow-elevated p-4 pb-8">
+              <div className="bg-card rounded-2xl border border-border shadow-elevated p-4 w-full max-w-sm" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-sm font-bold text-foreground">

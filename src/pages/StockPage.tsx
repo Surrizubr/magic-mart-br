@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getStock } from '@/data/mockData';
@@ -28,6 +28,10 @@ export function StockPage({ onBack }: StockPageProps) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [stock, setStock] = useState<StockItem[]>(() => getStock());
+
+  useEffect(() => {
+    localStorage.setItem('stock_items', JSON.stringify(stock));
+  }, [stock]);
 
   const filtered = stock.filter(s => {
     if (search && !s.product_name.toLowerCase().includes(search.toLowerCase()) &&

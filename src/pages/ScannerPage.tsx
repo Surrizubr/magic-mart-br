@@ -129,16 +129,45 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
 
   const handleSave = () => {
     if (!result) return;
-    const existing = JSON.parse(localStorage.getItem('scanner_pending') || '[]');
-    existing.push({
-      store_name: result.store_name,
-      store_address: result.store_address,
-      date: result.date,
-      items: result.items,
-      total: result.receipt_total,
-      saved_at: new Date().toISOString(),
+
+    // Save to purchase_history
+    const history = JSON.parse(localStorage.getItem('purchase_history') || '[]');
+    result.items.forEach(item => {
+      history.push({
+        id: `h_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        product_name: item.product_name,
+        category: item.category,
+        quantity: item.quantity,
+        price: item.discount_amount > 0 ? item.discounted_price / item.quantity : item.unit_price,
+        total_price: item.discount_amount > 0 ? item.discounted_price : item.total_price,
+        store_name: result.store_name,
+        purchase_date: result.date,
+      });
     });
-    localStorage.setItem('scanner_pending', JSON.stringify(existing));
+    localStorage.setItem('purchase_history', JSON.stringify(history));
+
+    // Save to stock_items
+    const existingStock: any[] = JSON.parse(localStorage.getItem('stock_items') || '[]');
+    result.items.forEach(item => {
+      const existing = existingStock.find(s => s.product_name.toLowerCase() === item.product_name.toLowerCase());
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        existingStock.push({
+          id: `stock_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          product_name: item.product_name,
+          category: item.category,
+          quantity: item.quantity,
+          unit: item.unit,
+          min_quantity: 1,
+          daily_consumption_rate: 0.1,
+          status: 'ok',
+          last_price: item.discount_amount > 0 ? item.discounted_price / item.quantity : item.unit_price,
+        });
+      }
+    });
+    localStorage.setItem('stock_items', JSON.stringify(existingStock));
+
     setSaved(true);
   };
 

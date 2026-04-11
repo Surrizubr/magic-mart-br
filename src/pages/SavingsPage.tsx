@@ -22,6 +22,12 @@ function getWeekColor(val: number) {
   return 'bg-warning';
 }
 
+interface StoreInfo {
+  total: number;
+  count: number;
+  date: string;
+}
+
 interface SavingsPageProps {
   onBack?: () => void;
   onNavigateToHistory?: (date: string, store: string) => void;
@@ -30,24 +36,38 @@ interface SavingsPageProps {
 export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
   const allHistory = getHistory();
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [selectedWeekDay, setSelectedWeekDay] = useState<number | null>(null);
 
   const now = new Date();
-  const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+  const fourWeeksAgo = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
   const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
 
-  // Filter: weekly uses last 1 month, monthly uses last 3 months
-  const weekHistory = allHistory.filter(h => new Date(h.purchase_date) >= oneMonthAgo);
+  const weekHistory = allHistory.filter(h => new Date(h.purchase_date) >= fourWeeksAgo);
   const monthHistory = allHistory.filter(h => new Date(h.purchase_date) >= threeMonthsAgo);
 
-  // Derive weekly heatmap (last 1 month only)
-  const weekData = [0, 0, 0, 0, 0, 0, 0];
+  // Weekly: count unique stores per weekday
+  const weekStores: Record<number, Record<string, StoreInfo>> = {};
   weekHistory.forEach(h => {
     const d = new Date(h.purchase_date);
     const day = (d.getDay() + 6) % 7;
-    weekData[day]++;
+    if (!weekStores[day]) weekStores[day] = {};
+    const store = h.store_name;
+    if (!weekStores[day][store]) {
+      weekStores[day][store] = { total: 0, count: 0, date: h.purchase_date };
+    }
+    weekStores[day][store].total += h.total_price;
+    weekStores[day][store].count += 1;
+    if (h.purchase_date > weekStores[day][store].date) {
+      weekStores[day][store].date = h.purchase_date;
+    }
   });
 
-  // Group monthly history by day of month (last 3 months only)
+  const weekData = Array.from({ length: 7 }, (_, i) => {
+    const stores = weekStores[i] || {};
+    return Object.keys(stores).length;
+  });
+
+  // Monthly: group by day of month, count unique stores
   const dayPurchases: Record<number, PurchaseHistory[]> = {};
   monthHistory.forEach(h => {
     const d = new Date(h.purchase_date);
@@ -55,50 +75,79 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
     (dayPurchases[day] ||= []).push(h);
   });
 
-  // Derive monthly heatmap
   const monthData = Array.from({ length: 31 }, (_, i) => {
     const items = dayPurchases[i + 1] || [];
-    const count = items.length;
+    // Count unique stores
+    const uniqueStores = new Set(items.map(h => h.store_name)).size;
     let level = 0;
-    if (count >= 3) level = 1;
-    else if (count === 2) level = 2;
-    else if (count === 1) level = 3;
-    return { day: i + 1, level, count };
+    if (uniqueStores >= 3) level = 1;
+    else if (uniqueStores === 2) level = 2;
+    else if (uniqueStores === 1) level = 3;
+    return { day: i + 1, level, storeCount: uniqueStores };
   });
 
-  // Get stores for selected day, sorted by most recent first
-  const selectedDayStores = selectedDay
-    ? Object.entries(
-        (dayPurchases[selectedDay] || []).reduce<Record<string, { total: number; count: number; date: string }>>((acc, h) => {
-          if (!acc[h.store_name]) {
-            acc[h.store_name] = { total: 0, count: 0, date: h.purchase_date };
-          }
-          acc[h.store_name].total += h.total_price;
-          acc[h.store_name].count += 1;
-          // Keep the most recent date
-          if (h.purchase_date > acc[h.store_name].date) {
-            acc[h.store_name].date = h.purchase_date;
-          }
-          return acc;
-        }, {})
-      ).sort((a, b) => b[1].date.localeCompare(a[1].date))
-    : [];
+  // Get stores for selected month day
+  const getMonthDayStores = (day: number) => {
+    const items = dayPurchases[day] || [];
+    const storeMap: Record<string, StoreInfo> = {};
+    items.forEach(h => {
+      if (!storeMap[h.store_name]) {
+        storeMap[h.store_name] = { total: 0, count: 0, date: h.purchase_date };
+      }
+      storeMap[h.store_name].total += h.total_price;
+      storeMap[h.store_name].count += 1;
+      if (h.purchase_date > storeMap[h.store_name].date) {
+        storeMap[h.store_name].date = h.purchase_date;
+      }
+    });
+    return Object.entries(storeMap).sort((a, b) => b[1].date.localeCompare(a[1].date));
+  };
+
+  // Get stores for selected week day
+  const getWeekDayStores = (weekDay: number) => {
+    const stores = weekStores[weekDay] || {};
+    return Object.entries(stores).sort((a, b) => b[1].date.localeCompare(a[1].date));
+  };
 
   const handleDayClick = (day: number) => {
-    const items = dayPurchases[day];
-    if (items && items.length > 0) {
+    if (monthData[day - 1].storeCount > 0) {
       setSelectedDay(day);
+      setSelectedWeekDay(null);
     }
   };
 
-  const handleStoreClick = (store: string) => {
-    if (!selectedDay || !onNavigateToHistory) return;
-    const items = dayPurchases[selectedDay];
-    if (items && items.length > 0) {
-      onNavigateToHistory(items[0].purchase_date, store);
+  const handleWeekDayClick = (weekDay: number) => {
+    if (weekData[weekDay] > 0) {
+      setSelectedWeekDay(weekDay);
+      setSelectedDay(null);
+    }
+  };
+
+  const handleStoreClick = (store: string, storeDate: string) => {
+    if (onNavigateToHistory) {
+      onNavigateToHistory(storeDate, store);
     }
     setSelectedDay(null);
+    setSelectedWeekDay(null);
   };
+
+  const closePopup = () => {
+    setSelectedDay(null);
+    setSelectedWeekDay(null);
+  };
+
+  // Determine which stores to show in popup
+  const popupOpen = selectedDay !== null || selectedWeekDay !== null;
+  const popupStores = selectedDay !== null
+    ? getMonthDayStores(selectedDay)
+    : selectedWeekDay !== null
+      ? getWeekDayStores(selectedWeekDay)
+      : [];
+  const popupTitle = selectedDay !== null
+    ? `Dia ${selectedDay}`
+    : selectedWeekDay !== null
+      ? weekDays[selectedWeekDay]
+      : '';
 
   return (
     <div className="pb-20">
@@ -162,17 +211,22 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
           <h3 className="text-sm font-bold text-foreground mb-3">Dias da Semana</h3>
           <div className="grid grid-cols-7 gap-2">
             {weekDays.map((day, i) => (
-              <div key={day} className="flex flex-col items-center gap-1.5">
+              <button
+                key={day}
+                onClick={() => handleWeekDayClick(i)}
+                disabled={weekData[i] === 0}
+                className="flex flex-col items-center gap-1.5 group"
+              >
                 <span className="text-[10px] font-medium text-muted-foreground">{day}</span>
-                <div className={`w-full aspect-square rounded-lg ${getWeekColor(weekData[i])} flex items-center justify-center`}>
+                <div className={`w-full aspect-square rounded-lg ${getWeekColor(weekData[i])} flex items-center justify-center transition-transform ${weekData[i] > 0 ? 'cursor-pointer group-hover:scale-110 group-active:scale-95' : ''}`}>
                   {weekData[i] > 0 && <span className="text-xs font-bold text-foreground">{weekData[i]}</span>}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
           <div className="flex items-center gap-1.5 mt-3 text-[10px] text-muted-foreground">
             <Info className="w-3 h-3" />
-            <span>Baseado no seu histórico de compras</span>
+            <span>Últimas 4 semanas · Toque para ver os locais</span>
           </div>
         </div>
 
@@ -185,52 +239,50 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                 key={i}
                 onClick={() => handleDayClick(d.day)}
                 className="flex flex-col items-center gap-1 group"
-                disabled={d.count === 0}
+                disabled={d.storeCount === 0}
               >
                 <span className="text-[10px] text-muted-foreground">{d.day}</span>
-                <div className={`w-full aspect-square rounded-lg ${getLevelColor(d.level)} flex items-center justify-center transition-transform ${d.count > 0 ? 'cursor-pointer group-hover:scale-110 group-active:scale-95' : ''}`}>
-                  {d.count > 0 && <span className="text-[10px] font-bold text-foreground">{d.count}</span>}
+                <div className={`w-full aspect-square rounded-lg ${getLevelColor(d.level)} flex items-center justify-center transition-transform ${d.storeCount > 0 ? 'cursor-pointer group-hover:scale-110 group-active:scale-95' : ''}`}>
+                  {d.storeCount > 0 && <span className="text-[10px] font-bold text-foreground">{d.storeCount}</span>}
                 </div>
               </button>
             ))}
           </div>
           <div className="flex items-center gap-1.5 mt-3 text-[10px] text-muted-foreground">
             <Info className="w-3 h-3" />
-            <span>Toque em um dia com compras para ver os locais visitados</span>
+            <span>Últimos 3 meses · Toque para ver os locais</span>
           </div>
         </div>
       </motion.div>
 
-      {/* Store Popup */}
+      {/* Store Popup (shared for week and month) */}
       <AnimatePresence>
-        {selectedDay !== null && selectedDayStores.length > 0 && (
+        {popupOpen && popupStores.length > 0 && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-foreground/40 z-40"
-              onClick={() => setSelectedDay(null)}
+              onClick={closePopup}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-6"
-              onClick={() => setSelectedDay(null)}
+              onClick={closePopup}
             >
               <div className="bg-card rounded-2xl border border-border shadow-elevated p-4 w-full max-w-sm" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="text-sm font-bold text-foreground">
-                      Dia {selectedDay}
-                    </p>
+                    <p className="text-sm font-bold text-foreground">{popupTitle}</p>
                     <p className="text-xs text-muted-foreground">
-                      {selectedDayStores.length} local(is) visitado(s)
+                      {popupStores.length} local(is) visitado(s)
                     </p>
                   </div>
                   <button
-                    onClick={() => setSelectedDay(null)}
+                    onClick={closePopup}
                     className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center"
                   >
                     <X className="w-4 h-4 text-secondary-foreground" />
@@ -238,10 +290,10 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                 </div>
 
                 <div className="space-y-2">
-                  {selectedDayStores.map(([store, info]) => (
+                  {popupStores.map(([store, info]) => (
                     <button
                       key={store}
-                      onClick={() => handleStoreClick(store)}
+                      onClick={() => handleStoreClick(store, info.date)}
                       className="w-full flex items-center gap-3 bg-secondary/50 hover:bg-secondary rounded-xl p-3 transition-colors text-left"
                     >
                       <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">

@@ -27,6 +27,7 @@ interface AIReceiptResult {
   items: ReceiptItem[];
   receipt_total: number;
   items_sum: number;
+  discounted_sum: number;
   discount?: number;
   difference: number;
   notes?: string;

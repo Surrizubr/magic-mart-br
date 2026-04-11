@@ -15,6 +15,8 @@ interface ReceiptItem {
   unit: string;
   unit_price: number;
   total_price: number;
+  discount_amount: number;
+  discounted_price: number;
   category: string;
 }
 
@@ -25,6 +27,7 @@ interface AIReceiptResult {
   items: ReceiptItem[];
   receipt_total: number;
   items_sum: number;
+  discounted_sum: number;
   discount?: number;
   difference: number;
   notes?: string;
@@ -102,15 +105,19 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
       const items: ReceiptItem[] = (data.items || []).map((item: any, i: number) => ({
         ...item,
         id: `ai-${i + 1}`,
+        discount_amount: item.discount_amount || 0,
+        discounted_price: item.discounted_price ?? item.total_price,
       }));
 
       const itemsSum = items.reduce((s: number, i: ReceiptItem) => s + i.total_price, 0);
+      const discountedSum = items.reduce((s: number, i: ReceiptItem) => s + i.discounted_price, 0);
 
       setResult({
         ...data,
         items,
         items_sum: itemsSum,
-        difference: Math.abs((data.receipt_total || 0) - itemsSum),
+        discounted_sum: discountedSum,
+        difference: Math.abs((data.receipt_total || 0) - discountedSum),
       });
       setStep('results');
     } catch (err: any) {
@@ -140,18 +147,23 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
     const newItems = result.items.map(item => {
       if (item.id !== id) return item;
       const updated = { ...item, [field]: value };
-      // Recalculate total_price when quantity or unit_price changes
       if (field === 'quantity' || field === 'unit_price') {
         updated.total_price = Number(updated.quantity) * Number(updated.unit_price);
+        updated.discounted_price = updated.total_price - updated.discount_amount;
+      }
+      if (field === 'discount_amount') {
+        updated.discounted_price = updated.total_price - Number(value);
       }
       return updated;
     });
     const newSum = newItems.reduce((s, i) => s + i.total_price, 0);
+    const newDiscountedSum = newItems.reduce((s, i) => s + i.discounted_price, 0);
     setResult({
       ...result,
       items: newItems,
       items_sum: newSum,
-      difference: Math.abs(result.receipt_total - newSum),
+      discounted_sum: newDiscountedSum,
+      difference: Math.abs(result.receipt_total - newDiscountedSum),
     });
   };
 
@@ -159,11 +171,13 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
     if (!result) return;
     const newItems = result.items.filter(i => i.id !== id);
     const newSum = newItems.reduce((s, i) => s + i.total_price, 0);
+    const newDiscountedSum = newItems.reduce((s, i) => s + i.discounted_price, 0);
     setResult({
       ...result,
       items: newItems,
       items_sum: newSum,
-      difference: Math.abs(result.receipt_total - newSum),
+      discounted_sum: newDiscountedSum,
+      difference: Math.abs(result.receipt_total - newDiscountedSum),
     });
   };
 
@@ -299,24 +313,28 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
             {/* Totals */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Total do cupom:</span>
-                <span className="text-sm font-bold text-primary">R$ {result.receipt_total.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Soma dos itens:</span>
+                <span className="text-xs text-muted-foreground">Soma dos itens (original):</span>
                 <span className="text-sm font-semibold text-foreground">R$ {result.items_sum.toFixed(2)}</span>
               </div>
               {result.discount != null && result.discount > 0 && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Desconto:</span>
+                  <span className="text-xs text-muted-foreground">Desconto aplicado:</span>
                   <span className="text-sm font-semibold text-green-600">- R$ {result.discount.toFixed(2)}</span>
                 </div>
               )}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Soma com desconto:</span>
+                <span className="text-sm font-bold text-primary">R$ {result.discounted_sum.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between border-t border-border pt-1.5">
+                <span className="text-xs font-medium text-foreground">Total do cupom:</span>
+                <span className="text-sm font-bold text-primary">R$ {result.receipt_total.toFixed(2)}</span>
+              </div>
               {hasDifference && (
                 <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2 mt-1">
                   <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                   <span className="text-xs text-amber-700 dark:text-amber-400">
-                    Diferença de R$ {result.difference.toFixed(2)} entre o total e a soma dos itens
+                    Diferença de R$ {result.difference.toFixed(2)} entre o total do cupom e a soma com desconto
                   </span>
                 </div>
               )}
@@ -383,10 +401,29 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
                           />
                         </div>
                       </div>
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="text-[10px] text-muted-foreground">Desconto</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={item.discount_amount}
+                            onChange={e => updateItem(item.id, 'discount_amount', parseFloat(e.target.value) || 0)}
+                            className="text-xs bg-background border border-border rounded px-2 py-1.5 w-full outline-none focus:ring-2 ring-primary/30"
+                          />
+                        </div>
+                      </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-xs text-muted-foreground">
-                          Total: R$ {item.total_price.toFixed(2)}
-                        </span>
+                        <div className="space-y-0.5">
+                          <span className="text-xs text-muted-foreground">
+                            Original: R$ {item.total_price.toFixed(2)}
+                          </span>
+                          {item.discount_amount > 0 && (
+                            <span className="text-xs text-green-600 block">
+                              Com desconto: R$ {item.discounted_price.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
                         <Button size="sm" variant="ghost" onClick={() => setEditingItem(null)} className="h-7 text-xs">
                           <Check className="w-3 h-3 mr-1" /> OK
                         </Button>
@@ -403,7 +440,16 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-bold text-foreground">R$ {item.total_price.toFixed(2)}</span>
+                        <div className="text-right">
+                          {item.discount_amount > 0 ? (
+                            <>
+                              <span className="text-xs text-muted-foreground line-through block">R$ {item.total_price.toFixed(2)}</span>
+                              <span className="text-sm font-bold text-green-600">R$ {item.discounted_price.toFixed(2)}</span>
+                            </>
+                          ) : (
+                            <span className="text-sm font-bold text-foreground">R$ {item.total_price.toFixed(2)}</span>
+                          )}
+                        </div>
                         <button onClick={() => setEditingItem(item.id)} className="text-muted-foreground hover:text-primary p-0.5">
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>

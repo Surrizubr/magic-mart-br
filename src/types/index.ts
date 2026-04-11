@@ -47,6 +47,7 @@ export interface PurchaseHistory {
   store_lng?: number;
   purchase_date: string;
   list_id?: string;
+  scanned?: boolean;
 }
 
 export type SubscriptionStatus = 'loading' | 'trial' | 'active' | 'expired' | 'no_trial';

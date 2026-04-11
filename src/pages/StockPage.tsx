@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getStock } from '@/data/mockData';

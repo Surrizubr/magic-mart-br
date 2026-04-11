@@ -84,7 +84,7 @@ const Index = () => {
         </div>
       )}
 
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      <BottomNav activeTab={activeTab} onTabChange={(tab) => { if (tab !== 'history') setHistoryFilter({}); setActiveTab(tab); }} />
       <AppMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
     </div>
   );

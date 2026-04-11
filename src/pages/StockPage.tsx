@@ -28,6 +28,8 @@ export function StockPage({ onBack }: StockPageProps) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [stock, setStock] = useState<StockItem[]>(() => getStock());
+  const [editingQtyId, setEditingQtyId] = useState<string | null>(null);
+  const [editingQtyValue, setEditingQtyValue] = useState('');
 
   useEffect(() => {
     localStorage.setItem('stock_items', JSON.stringify(stock));
@@ -144,7 +146,32 @@ export function StockPage({ onBack }: StockPageProps) {
                         <Minus className="w-4 h-4 text-secondary-foreground" />
                       </button>
                       <div className="text-center">
-                        <span className="text-lg font-bold text-foreground">{s.quantity}</span>
+                        {editingQtyId === s.id ? (
+                          <input
+                            type="number"
+                            autoFocus
+                            value={editingQtyValue}
+                            onChange={e => setEditingQtyValue(e.target.value)}
+                            onBlur={() => {
+                              const val = parseInt(editingQtyValue, 10);
+                              if (!isNaN(val) && val >= 0) {
+                                setStock(prev => prev.map(item => item.id === s.id ? { ...item, quantity: val } : item));
+                              }
+                              setEditingQtyId(null);
+                            }}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                            }}
+                            className="w-12 text-lg font-bold text-foreground text-center bg-transparent border-b-2 border-primary outline-none"
+                          />
+                        ) : (
+                          <span
+                            className="text-lg font-bold text-foreground cursor-pointer"
+                            onClick={() => { setEditingQtyId(s.id); setEditingQtyValue(String(s.quantity)); }}
+                          >
+                            {s.quantity}
+                          </span>
+                        )}
                         <span className="text-xs text-muted-foreground ml-1">{s.unit}</span>
                       </div>
                       <button

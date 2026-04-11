@@ -83,8 +83,17 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
   };
 
   const handleSaveAddress = () => {
-    // In a real app, persist the updated store name/address
+    if (!editingStore) return;
+    const all = getHistory();
+    const updated = all.map(h => {
+      if (h.purchase_date === editingStore.date && h.store_name === editingStore.store) {
+        return { ...h, store_name: editAddress, purchase_date: editDate };
+      }
+      return h;
+    });
+    localStorage.setItem('purchase_history', JSON.stringify(updated));
     setEditingStore(null);
+    window.location.reload();
   };
 
   return (

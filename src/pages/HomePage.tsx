@@ -41,7 +41,7 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-3">
             <button onClick={onOpenMenu} className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center hover:opacity-90 transition-opacity">
-              <span className="text-primary-foreground text-lg">🌿</span>
+              <Settings className="w-6 h-6 text-primary-foreground" />
             </button>
             <div>
               <p className="text-sm text-muted-foreground">Olá, Usuário 👋</p>

@@ -142,6 +142,7 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
         total_price: item.discount_amount > 0 ? item.discounted_price : item.total_price,
         store_name: result.store_name,
         purchase_date: result.date,
+        scanned: true,
       });
     });
     localStorage.setItem('purchase_history', JSON.stringify(history));

@@ -156,8 +156,8 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                       <span className="text-xs font-medium text-muted-foreground">R$ {storeTotal.toFixed(2)}</span>
                     </div>
 
-                    {/* Scan banner */}
-                    {onNavigateToScanner && (
+                    {/* Scan banner - only show if none of the items in this store group were scanned */}
+                    {onNavigateToScanner && !storeItems.some(i => i.scanned) && (
                       <button
                         onClick={onNavigateToScanner}
                         className="w-full flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2 text-left"

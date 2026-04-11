@@ -29,10 +29,15 @@ const categoryIcons: Record<string, string> = {
 interface HistoryPageProps {
   onNavigateToScanner?: () => void;
   onBack?: () => void;
+  filterDate?: string;
+  filterStore?: string;
 }
 
-export function HistoryPage({ onNavigateToScanner, onBack }: HistoryPageProps) {
-  const history = getHistory();
+export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterStore }: HistoryPageProps) {
+  const allHistory = getHistory();
+  const history = filterDate
+    ? allHistory.filter(h => h.purchase_date === filterDate && (!filterStore || h.store_name === filterStore))
+    : allHistory;
   const totalMonth = history.reduce((sum, h) => sum + h.total_price, 0);
 
   // State for edit address dialog

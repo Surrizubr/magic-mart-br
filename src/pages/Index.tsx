@@ -23,6 +23,7 @@ const Index = () => {
   const { status, daysLeft, openCheckout } = useSubscription();
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<{ date?: string; store?: string }>({});
 
   // Show loading
   if (authLoading) {
@@ -42,13 +43,18 @@ const Index = () => {
   const isTrial = status === 'trial';
   const showBanners = status === 'trial' || status === 'expired';
 
+  const navigateToHistoryFiltered = (date: string, store: string) => {
+    setHistoryFilter({ date, store });
+    setActiveTab('history');
+  };
+
   const renderPage = () => {
     switch (activeTab) {
       case 'home': return <HomePage daysLeft={daysLeft} isTrial={isTrial} onNavigate={setActiveTab} onOpenMenu={() => setMenuOpen(true)} />;
       case 'lists': return <ListsPage onBack={goHome} />;
       case 'stock': return <StockPage onBack={goHome} />;
-      case 'savings': return <SavingsPage onBack={goHome} />;
-      case 'history': return <HistoryPage onNavigateToScanner={() => setActiveTab('scanner')} onBack={goHome} />;
+      case 'savings': return <SavingsPage onBack={goHome} onNavigateToHistory={navigateToHistoryFiltered} />;
+      case 'history': return <HistoryPage onNavigateToScanner={() => setActiveTab('scanner')} onBack={() => { setHistoryFilter({}); goHome(); }} filterDate={historyFilter.date} filterStore={historyFilter.store} />;
       case 'reports': return <ReportsPage onBack={goHome} />;
       case 'scanner': return <ScannerPage onBack={goHome} />;
       case 'shopping': return <ShoppingPage onNavigate={setActiveTab} onBack={goHome} />;

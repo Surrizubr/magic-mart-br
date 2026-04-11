@@ -104,15 +104,19 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
       const items: ReceiptItem[] = (data.items || []).map((item: any, i: number) => ({
         ...item,
         id: `ai-${i + 1}`,
+        discount_amount: item.discount_amount || 0,
+        discounted_price: item.discounted_price ?? item.total_price,
       }));
 
       const itemsSum = items.reduce((s: number, i: ReceiptItem) => s + i.total_price, 0);
+      const discountedSum = items.reduce((s: number, i: ReceiptItem) => s + i.discounted_price, 0);
 
       setResult({
         ...data,
         items,
         items_sum: itemsSum,
-        difference: Math.abs((data.receipt_total || 0) - itemsSum),
+        discounted_sum: discountedSum,
+        difference: Math.abs((data.receipt_total || 0) - discountedSum),
       });
       setStep('results');
     } catch (err: any) {

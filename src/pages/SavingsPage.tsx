@@ -213,12 +213,13 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
               onClick={() => setSelectedDay(null)}
             />
             <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 50 }}
-              className="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-6"
+              onClick={() => setSelectedDay(null)}
             >
-              <div className="bg-card rounded-t-2xl border-t border-border shadow-elevated p-4 pb-8">
+              <div className="bg-card rounded-2xl border border-border shadow-elevated p-4 w-full max-w-sm" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-sm font-bold text-foreground">

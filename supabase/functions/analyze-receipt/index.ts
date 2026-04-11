@@ -39,10 +39,12 @@ Regras:
 - Identifique o valor TOTAL do cupom (geralmente no final, após "TOTAL" ou "VALOR TOTAL").
 - Calcule a soma de todos os itens e compare com o total do cupom.
 - Se houver desconto, troco, ou taxa, identifique-os separadamente.
-- DESCONTOS: Se o cupom apresentar descontos (globais ou por item), informe o valor total de desconto no campo "discount". 
-  Distribua o desconto proporcionalmente entre os itens usando o campo "discount_amount" de cada item.
+- DESCONTOS: No cupom fiscal, descontos geralmente aparecem na linha LOGO ABAIXO do item que recebeu o desconto.
+  Aplique o desconto SOMENTE no item específico que o recebeu, NÃO distribua proporcionalmente entre todos os itens.
+  Use o campo "discount_amount" do item para informar o valor do desconto aplicado naquele item específico.
   O "discounted_price" de cada item deve ser: total_price - discount_amount.
-  A soma de todos os "discounted_price" deve ser igual ao total do cupom.
+  Itens sem desconto devem ter discount_amount = 0 e discounted_price = total_price.
+  O campo "discount" no nível raiz deve conter a soma de todos os descontos individuais.
 - Categorize cada item: Grãos, Laticínios, Carnes, Frutas, Verduras, Bebidas, Padaria, Limpeza, Higiene, Temperos, Frios, Congelados, Doces, ou Outros.
 - Se múltiplas imagens forem fornecidas, elas são partes do MESMO cupom. Consolide sem duplicar itens.`;
 

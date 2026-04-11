@@ -171,11 +171,13 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
     if (!result) return;
     const newItems = result.items.filter(i => i.id !== id);
     const newSum = newItems.reduce((s, i) => s + i.total_price, 0);
+    const newDiscountedSum = newItems.reduce((s, i) => s + i.discounted_price, 0);
     setResult({
       ...result,
       items: newItems,
       items_sum: newSum,
-      difference: Math.abs(result.receipt_total - newSum),
+      discounted_sum: newDiscountedSum,
+      difference: Math.abs(result.receipt_total - newDiscountedSum),
     });
   };
 

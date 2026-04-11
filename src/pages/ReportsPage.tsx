@@ -36,16 +36,30 @@ export function ReportsPage({ onBack }: ReportsPageProps) {
   }, {});
   const totalVisits = Object.values(storeVisits).reduce((a, b) => a + b, 0);
 
-  // Derive category spending from history
+  // Category merge map — consolidate similar categories
+  const categoryMerge: Record<string, string> = {
+    'Frutas': 'Hortifruti',
+    'Verduras': 'Hortifruti',
+    'Legumes': 'Hortifruti',
+    'Hortifruti': 'Hortifruti',
+    'Temperos': 'Alimentos',
+    'Grãos': 'Alimentos',
+    'Padaria': 'Alimentos',
+  };
+
+  // Derive category spending from history with merging
   const categoryTotals = history.reduce<Record<string, number>>((acc, h) => {
-    acc[h.category] = (acc[h.category] || 0) + h.total_price;
+    const merged = categoryMerge[h.category] || h.category;
+    acc[merged] = (acc[merged] || 0) + h.total_price;
     return acc;
   }, {});
-  const categoryData = Object.entries(categoryTotals).map(([name, value], i) => ({
-    name,
-    value,
-    fill: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
-  }));
+  const categoryData = Object.entries(categoryTotals)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, value], i) => ({
+      name,
+      value,
+      fill: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
+    }));
   const catTotal = categoryData.reduce((s, c) => s + c.value, 0);
   const enrichedCategories = categoryData.map(c => ({
     ...c,

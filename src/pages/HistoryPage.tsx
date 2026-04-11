@@ -29,10 +29,15 @@ const categoryIcons: Record<string, string> = {
 interface HistoryPageProps {
   onNavigateToScanner?: () => void;
   onBack?: () => void;
+  filterDate?: string;
+  filterStore?: string;
 }
 
-export function HistoryPage({ onNavigateToScanner, onBack }: HistoryPageProps) {
-  const history = getHistory();
+export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterStore }: HistoryPageProps) {
+  const allHistory = getHistory();
+  const history = filterDate
+    ? allHistory.filter(h => h.purchase_date === filterDate && (!filterStore || h.store_name === filterStore))
+    : allHistory;
   const totalMonth = history.reduce((sum, h) => sum + h.total_price, 0);
 
   // State for edit address dialog
@@ -86,7 +91,10 @@ export function HistoryPage({ onNavigateToScanner, onBack }: HistoryPageProps) {
     <div className="pb-20">
       <PageHeader
         title="Histórico"
-        subtitle="Suas compras anteriores"
+        subtitle={filterDate
+          ? `${filterStore || ''} — ${new Date(filterDate + 'T12:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}`
+          : "Suas compras anteriores"
+        }
         onBack={onBack}
         action={
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary text-primary text-xs font-medium">

@@ -15,6 +15,8 @@ interface ReceiptItem {
   unit: string;
   unit_price: number;
   total_price: number;
+  discount_amount: number;
+  discounted_price: number;
   category: string;
 }
 

@@ -38,12 +38,9 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedWeekDay, setSelectedWeekDay] = useState<number | null>(null);
 
-  const now = new Date();
-  const fourWeeksAgo = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
-  const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
-
-  const weekHistory = allHistory.filter(h => new Date(h.purchase_date) >= fourWeeksAgo);
-  const monthHistory = allHistory.filter(h => new Date(h.purchase_date) >= threeMonthsAgo);
+  // Use all history — no date filtering, so every purchase appears
+  const weekHistory = allHistory;
+  const monthHistory = allHistory;
 
   // Weekly: count unique stores per weekday
   const weekStores: Record<number, Record<string, StoreInfo>> = {};

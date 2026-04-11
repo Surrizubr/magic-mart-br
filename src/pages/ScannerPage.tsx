@@ -313,24 +313,28 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
             {/* Totals */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Total do cupom:</span>
-                <span className="text-sm font-bold text-primary">R$ {result.receipt_total.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Soma dos itens:</span>
+                <span className="text-xs text-muted-foreground">Soma dos itens (original):</span>
                 <span className="text-sm font-semibold text-foreground">R$ {result.items_sum.toFixed(2)}</span>
               </div>
               {result.discount != null && result.discount > 0 && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Desconto:</span>
+                  <span className="text-xs text-muted-foreground">Desconto aplicado:</span>
                   <span className="text-sm font-semibold text-green-600">- R$ {result.discount.toFixed(2)}</span>
                 </div>
               )}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Soma com desconto:</span>
+                <span className="text-sm font-bold text-primary">R$ {result.discounted_sum.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between border-t border-border pt-1.5">
+                <span className="text-xs font-medium text-foreground">Total do cupom:</span>
+                <span className="text-sm font-bold text-primary">R$ {result.receipt_total.toFixed(2)}</span>
+              </div>
               {hasDifference && (
                 <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2 mt-1">
                   <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                   <span className="text-xs text-amber-700 dark:text-amber-400">
-                    Diferença de R$ {result.difference.toFixed(2)} entre o total e a soma dos itens
+                    Diferença de R$ {result.difference.toFixed(2)} entre o total do cupom e a soma com desconto
                   </span>
                 </div>
               )}

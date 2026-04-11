@@ -377,15 +377,21 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
             )}
           </motion.div>
 
-          {/* Top save button */}
+          {/* Top action buttons */}
           {!saved && result.items.length > 0 && (
-            <Button
-              onClick={handleSave}
-              className="w-full gradient-primary text-primary-foreground border-0 h-11"
-            >
-              <Package className="w-4 h-4 mr-2" />
-              Salvar no Estoque e Histórico
-            </Button>
+            <div className="space-y-2">
+              <Button
+                onClick={handleSave}
+                className="w-full gradient-primary text-primary-foreground border-0 h-11"
+              >
+                <Package className="w-4 h-4 mr-2" />
+                Salvar no Estoque e Histórico
+              </Button>
+              <Button variant="destructive" onClick={reset} className="w-full h-10">
+                <X className="w-4 h-4 mr-2" />
+                Cancelar
+              </Button>
+            </div>
           )}
 
           {/* Items */}
@@ -536,6 +542,12 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
                 </p>
               </motion.div>
             )}
+            {!saved && (
+              <Button variant="destructive" onClick={reset} className="w-full h-10">
+                <X className="w-4 h-4 mr-2" />
+                Cancelar
+              </Button>
+            )}
             <Button variant="outline" onClick={reset} className="w-full">
               Escanear outro cupom
             </Button>
@@ -645,14 +657,28 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
           )}
         </div>
 
-        {/* Process button */}
+        {/* Process and cancel buttons */}
         {mode === 'multi' && images.length > 0 && (
-          <Button
-            onClick={() => processImages(images)}
-            className="w-full gradient-primary text-primary-foreground border-0 h-11"
-          >
-            <Check className="w-4 h-4 mr-2" />
-            Processar {images.length} foto(s) com IA
+          <div className="space-y-2">
+            <Button
+              onClick={() => processImages(images)}
+              className="w-full gradient-primary text-primary-foreground border-0 h-11"
+            >
+              <Check className="w-4 h-4 mr-2" />
+              Processar {images.length} foto(s) com IA
+            </Button>
+            <Button variant="destructive" onClick={reset} className="w-full h-10">
+              <X className="w-4 h-4 mr-2" />
+              Cancelar
+            </Button>
+          </div>
+        )}
+
+        {/* Cancel button for single mode before photo */}
+        {mode === 'single' && images.length === 0 && (
+          <Button variant="destructive" onClick={reset} className="w-full h-10">
+            <X className="w-4 h-4 mr-2" />
+            Cancelar
           </Button>
         )}
       </div>

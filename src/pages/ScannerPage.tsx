@@ -458,7 +458,6 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
                         </button>
                       </div>
                     </div>
-                    </div>
                   )}
                 </motion.div>
               );

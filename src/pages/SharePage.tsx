@@ -12,7 +12,7 @@ interface SharePageProps {
   onBack?: () => void;
 }
 
-function formatListForWhatsApp(list: ShoppingList, currency: string): string {
+function formatListForWhatsApp(list: ShoppingList, currency: string, fc: (v: number) => string): string {
   let text = `🛒 *${list.name}*\n\n`;
   if (list.items.length === 0) {
     text += '(lista vazia)\n';

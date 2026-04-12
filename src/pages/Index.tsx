@@ -56,7 +56,7 @@ const Index = () => {
       case 'savings': return <SavingsPage onBack={goHome} onNavigateToHistory={navigateToHistoryFiltered} />;
       case 'history': return <HistoryPage onNavigateToScanner={() => setActiveTab('scanner')} onBack={() => { setHistoryFilter({}); goHome(); }} filterDate={historyFilter.date} filterStore={historyFilter.store} />;
       case 'reports': return <ReportsPage onBack={goHome} onNavigate={(tab) => setActiveTab(tab as TabId)} />;
-      case 'scanner': return <ScannerPage onBack={goHome} />;
+      case 'scanner': return <ScannerPage onBack={goHome} onNavigateToHistory={navigateToHistoryFiltered} />;
       case 'shopping': return <ShoppingPage onNavigate={setActiveTab} onBack={goHome} />;
       case 'share': return <SharePage onBack={goHome} />;
     }

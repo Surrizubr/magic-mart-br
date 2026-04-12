@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getStock } from '@/data/mockData';
-import { Plus, Minus, Search, Pencil, ShoppingCart, Brain } from 'lucide-react';
+import { Plus, Minus, Search, Pencil, ShoppingCart, Sparkles } from 'lucide-react';
 import { StockItem } from '@/types';
 import { recalculateAllConsumptionRates } from '@/lib/consumptionCalculator';
 
@@ -141,7 +141,7 @@ export function StockPage({ onBack }: StockPageProps) {
                     <p className="text-[11px] font-medium text-warning mt-0.5">· ~{daysLeft}d restantes</p>
                     {(s as any).learned_consumption && (
                       <p className="text-[10px] text-primary mt-0.5 flex items-center gap-1">
-                        <Brain className="w-3 h-3" />
+                        <Sparkles className="w-3 h-3" />
                         Consumo aprendido ({(s as any).purchase_count} compras, ~{(s as any).avg_duration_days}d por ciclo)
                       </p>
                     )}

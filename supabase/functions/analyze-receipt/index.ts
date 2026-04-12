@@ -17,12 +17,8 @@ serve(async (req) => {
       });
     }
 
-    // Determine which API to use
-    const useGeminiDirect = !!geminiApiKey;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-
-    if (!useGeminiDirect && !LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "Nenhuma chave API configurada. Configure sua chave Gemini nas configurações." }), {
+    if (!geminiApiKey) {
+      return new Response(JSON.stringify({ error: "Chave API Gemini não configurada. Vá em Configurações > Chave API Gemini para adicionar sua chave pessoal." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -109,31 +105,16 @@ Você DEVE:
       },
     ];
 
-    let apiUrl: string;
-    let headers: Record<string, string>;
-    let model: string;
-
-    if (useGeminiDirect) {
-      // Use Google Gemini API directly with user's personal key
-      apiUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-      headers = {
-        Authorization: `Bearer ${geminiApiKey}`,
-        "Content-Type": "application/json",
-      };
-      model = "gemini-2.5-flash";
-    } else {
-      // Fallback to Lovable AI Gateway
-      apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
-      headers = {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      };
-      model = "google/gemini-2.5-flash";
-    }
+    const apiUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+    const apiHeaders: Record<string, string> = {
+      Authorization: `Bearer ${geminiApiKey}`,
+      "Content-Type": "application/json",
+    };
+    const model = "gemini-2.5-flash";
 
     const response = await fetch(apiUrl, {
       method: "POST",
-      headers,
+      headers: apiHeaders,
       body: JSON.stringify({
         model,
         messages: [

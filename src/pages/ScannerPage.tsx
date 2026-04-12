@@ -388,10 +388,11 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
                 <span className="text-sm font-bold text-primary">R$ {result.receipt_total.toFixed(2)}</span>
               </div>
               {hasDifference && (
-                <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2 mt-1">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2 mt-1">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <span className="text-xs text-amber-700 dark:text-amber-400">
-                    Diferença de R$ {result.difference.toFixed(2)} entre o total do cupom e a soma com desconto
+                    Diferença de R$ {result.difference.toFixed(2)} entre o total do cupom e a soma dos itens.
+                    Algum item pode não ter sido identificado corretamente. Ajuste preços, quantidades, ou adicione/remova itens abaixo.
                   </span>
                 </div>
               )}

@@ -46,6 +46,7 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
     'Temperos': 'Alimentos',
     'Grãos': 'Alimentos',
     'Padaria': 'Alimentos',
+    'Doces': 'Alimentos',
   };
 
   // Derive category spending from history with merging

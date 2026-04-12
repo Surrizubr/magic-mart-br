@@ -45,7 +45,7 @@ Regras:
   O "discounted_price" de cada item deve ser: total_price - discount_amount.
   Itens sem desconto devem ter discount_amount = 0 e discounted_price = total_price.
   O campo "discount" no nível raiz deve conter a soma de todos os descontos individuais.
-- Categorize cada item: Grãos, Laticínios, Carnes, Frutas, Verduras, Bebidas, Padaria, Limpeza, Higiene, Temperos, Frios, Congelados, Doces, ou Outros.
+- Categorize cada item: Grãos, Laticínios, Carnes, Frutas, Verduras, Bebidas, Padaria, Limpeza, Higiene, Temperos, Frios, Congelados, Alimentos, ou Outros.
 
 REGRA CRÍTICA PARA MÚLTIPLAS FOTOS:
 Quando múltiplas imagens forem enviadas, elas são partes SEQUENCIAIS do MESMO cupom fiscal longo.
@@ -100,7 +100,7 @@ Você DEVE:
                         discounted_price: { type: "number", description: "Preço final após desconto (total_price - discount_amount)" },
                         category: {
                           type: "string",
-                          enum: ["Grãos", "Laticínios", "Carnes", "Frutas", "Verduras", "Bebidas", "Padaria", "Limpeza", "Higiene", "Temperos", "Frios", "Congelados", "Doces", "Outros"],
+                          enum: ["Grãos", "Laticínios", "Carnes", "Frutas", "Verduras", "Bebidas", "Padaria", "Limpeza", "Higiene", "Temperos", "Frios", "Congelados", "Alimentos", "Outros"],
                         },
                       },
                       required: ["product_name", "quantity", "unit", "unit_price", "total_price", "discount_amount", "discounted_price", "category"],

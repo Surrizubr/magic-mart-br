@@ -46,6 +46,7 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
   const [saved, setSaved] = useState(false);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [originalDiscounts, setOriginalDiscounts] = useState<Map<string, { discount_amount: number; discounted_price: number; discount: number }>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
@@ -111,6 +112,15 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
 
       const itemsSum = items.reduce((s: number, i: ReceiptItem) => s + i.total_price, 0);
       const discountedSum = items.reduce((s: number, i: ReceiptItem) => s + i.discounted_price, 0);
+
+      // Store original discounts for toggle
+      const discountMap = new Map<string, { discount_amount: number; discounted_price: number; discount: number }>();
+      items.forEach(item => {
+        if (item.discount_amount > 0) {
+          discountMap.set(item.id, { discount_amount: item.discount_amount, discounted_price: item.discounted_price, discount: data.discount || 0 });
+        }
+      });
+      setOriginalDiscounts(discountMap);
 
       setResult({
         ...data,

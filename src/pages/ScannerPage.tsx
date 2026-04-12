@@ -503,10 +503,11 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
           >
             <Loader2 className="w-12 h-12 text-primary" />
           </motion.div>
-          <div className="text-center space-y-2">
-            <p className="text-sm font-medium text-foreground">{progressMsg}</p>
-            <p className="text-xs text-muted-foreground">
-              A IA está identificando todos os itens, preços e informações do cupom...
+          <div className="w-full max-w-xs space-y-3">
+            <Progress value={progressPercent} className="h-3" />
+            <p className="text-sm font-medium text-foreground text-center">{progressMsg}</p>
+            <p className="text-xs text-muted-foreground text-center">
+              {progressPercent}% concluído
             </p>
           </div>
         </div>
@@ -562,9 +563,12 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
               <input
                 type="date"
                 value={result.date}
-                onChange={e => setResult({ ...result, date: e.target.value })}
-                className="w-full p-2 rounded-lg border border-border bg-background text-foreground text-sm outline-none focus:ring-2 ring-primary/30"
+                onChange={e => { setResult({ ...result, date: e.target.value }); setDateError(false); }}
+                className={`w-full p-2 rounded-lg border bg-background text-foreground text-sm outline-none focus:ring-2 ring-primary/30 ${dateError ? 'border-destructive' : 'border-border'}`}
               />
+              {dateError && (
+                <p className="text-xs text-destructive font-medium">⚠️ Preencha a data da compra antes de salvar.</p>
+              )}
             </div>
 
             {/* Totals */}

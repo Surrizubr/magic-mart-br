@@ -8,6 +8,7 @@ import { recalculateAllConsumptionRates } from '@/lib/consumptionCalculator';
 import { SwipeableRow } from '@/components/SwipeableRow';
 import { addToReminderList } from '@/lib/reminderList';
 import { toast } from 'sonner';
+import { AddStockItemDialog } from '@/components/AddStockItemDialog';
 
 type StatusFilter = 'all' | 'critical' | 'low' | 'ok';
 
@@ -37,6 +38,12 @@ export function StockPage({ onBack }: StockPageProps) {
   });
   const [editingQtyId, setEditingQtyId] = useState<string | null>(null);
   const [editingQtyValue, setEditingQtyValue] = useState('');
+  const [showAddDialog, setShowAddDialog] = useState(false);
+
+  const handleAddItem = (item: StockItem) => {
+    setStock(prev => [item, ...prev]);
+    toast.success('Produto adicionado ao estoque!');
+  };
 
   useEffect(() => {
     localStorage.setItem('stock_items', JSON.stringify(stock));
@@ -75,11 +82,13 @@ export function StockPage({ onBack }: StockPageProps) {
         subtitle={`${stock.length} produtos`}
         onBack={onBack}
         action={
-          <button className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center shadow-elevated">
+          <button onClick={() => setShowAddDialog(true)} className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center shadow-elevated">
             <Plus className="w-5 h-5 text-primary-foreground" />
           </button>
         }
       />
+
+      <AddStockItemDialog open={showAddDialog} onOpenChange={setShowAddDialog} onAdd={handleAddItem} />
 
       <div className="p-4 space-y-4">
         {/* Search */}

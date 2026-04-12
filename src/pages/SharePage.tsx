@@ -33,7 +33,7 @@ function formatListForWhatsApp(list: ShoppingList, currency: string): string {
 
 export function SharePage({ onBack }: SharePageProps) {
   const { currency } = useLanguage();
-  const lists = getLists().filter(l => l.status === 'active');
+  const lists = getLists().filter(l => l.status === 'active' || l.status === 'shopping');
   const [selected, setSelected] = useState<string[]>([]);
 
   const toggleSelect = (id: string) => {

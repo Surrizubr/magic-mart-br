@@ -51,7 +51,14 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
   const [editDate, setEditDate] = useState('');
   const [geoLoading, setGeoLoading] = useState(false);
 
-  const grouped = history.reduce<Record<string, typeof history>>((acc, h) => {
+  const handleDeleteItem = (itemId: string) => {
+    const allHistory = getHistory();
+    const updated = allHistory.filter(h => h.id !== itemId);
+    localStorage.setItem('purchase_history', JSON.stringify(updated));
+    setHistoryData(prev => prev.filter(h => h.id !== itemId));
+  };
+
+  const grouped = historyData.reduce<Record<string, typeof historyData>>((acc, h) => {
     (acc[h.purchase_date] ||= []).push(h);
     return acc;
   }, {});

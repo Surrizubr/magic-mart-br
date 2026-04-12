@@ -116,9 +116,12 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
         throw new Error(fnError.message || 'Erro ao analisar cupom');
       }
 
-      if (data?.error) {
-        throw new Error(data.error);
+      if (!data?.ok) {
+        throw new Error(data?.error || 'Erro ao analisar cupom');
       }
+
+      // Unwrap structured response
+      const result = data.data;
 
       setProgressPercent(85);
       setProgressMsg('Organizando produtos e calculando totais...');

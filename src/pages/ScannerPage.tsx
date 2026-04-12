@@ -415,10 +415,44 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
                 <Package className="w-4 h-4 mr-2" />
                 Salvar no Estoque e Histórico
               </Button>
-              <Button variant="destructive" onClick={reset} className="w-full h-10">
-                <X className="w-4 h-4 mr-2" />
-                Cancelar
-              </Button>
+              {/* Discount toggle buttons */}
+              {result.discount != null && result.discount > 0 && (
+                <div className="flex gap-2">
+                  <Button
+                    variant={result.items.some(i => i.discount_amount > 0) ? "default" : "outline"}
+                    onClick={() => {
+                      // Restore original discounts from AI
+                      // Already applied - no action needed if already on
+                    }}
+                    className="flex-1 h-9 text-xs"
+                    disabled={result.items.some(i => i.discount_amount > 0)}
+                  >
+                    ✅ Com descontos
+                  </Button>
+                  <Button
+                    variant={result.items.every(i => i.discount_amount === 0) ? "default" : "outline"}
+                    onClick={() => {
+                      const newItems = result.items.map(item => ({
+                        ...item,
+                        discount_amount: 0,
+                        discounted_price: item.total_price,
+                      }));
+                      const newDiscountedSum = newItems.reduce((s, i) => s + i.discounted_price, 0);
+                      setResult({
+                        ...result,
+                        items: newItems,
+                        discount: 0,
+                        discounted_sum: newDiscountedSum,
+                        difference: Math.abs(result.receipt_total - newDiscountedSum),
+                      });
+                    }}
+                    className="flex-1 h-9 text-xs"
+                    disabled={result.items.every(i => i.discount_amount === 0)}
+                  >
+                    ❌ Sem descontos
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 

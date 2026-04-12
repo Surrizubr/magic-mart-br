@@ -145,6 +145,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
       }
     });
     localStorage.setItem('stock_items', JSON.stringify(existing));
+    recalculateAllConsumptionRates();
 
     // Save to history
     const history: any[] = JSON.parse(localStorage.getItem('purchase_history') || '[]');

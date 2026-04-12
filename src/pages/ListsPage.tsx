@@ -57,6 +57,7 @@ export function ListsPage({ onBack }: ListsPageProps) {
       }
     });
     localStorage.setItem('stock_items', JSON.stringify(existingStock));
+    recalculateAllConsumptionRates();
     const history = JSON.parse(localStorage.getItem('purchase_history') || '[]');
     checkedItems.forEach(item => {
       history.push({

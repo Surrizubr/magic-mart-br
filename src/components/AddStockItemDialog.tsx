@@ -9,6 +9,7 @@ import { StockItem } from '@/types';
 const categories = [
   'Laticínios', 'Grãos', 'Bebidas', 'Temperos', 'Limpeza',
   'Carnes', 'Frutas', 'Alimentos', 'Higiene', 'Hortifruti', 'Padaria',
+  'Transporte', 'Outros',
 ];
 
 const units = ['un', 'kg', 'g', 'L', 'ml', 'pct', 'cx'];

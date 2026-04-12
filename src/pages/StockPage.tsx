@@ -23,6 +23,7 @@ const categoryIcons: Record<string, string> = {
   'Laticínios': '🧀', 'Grãos': '🛒', 'Bebidas': '🥤', 'Temperos': '🧄',
   'Limpeza': '✨', 'Carnes': '🥩', 'Frutas': '🍎', 'Alimentos': '🛒',
   'Higiene': '♥', 'Hortifruti': '🥬', 'Padaria': '🍞',
+  'Transporte': '🚗', 'Outros': '📦',
 };
 
 interface StockPageProps {

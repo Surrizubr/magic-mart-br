@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { recalculateAllConsumptionRates } from '@/lib/consumptionCalculator';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getLists } from '@/data/mockData';

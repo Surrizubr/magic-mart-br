@@ -107,6 +107,7 @@ const translations: Record<string, Record<Lang, string>> = {
   quantity: { pt: 'Quantidade', en: 'Quantity', es: 'Cantidad' },
   minQuantity: { pt: 'Qtd. mínima', en: 'Min. quantity', es: 'Cant. mínima' },
   addItem: { pt: 'Adicionar', en: 'Add', es: 'Agregar' },
+  price: { pt: 'Valor', en: 'Price', es: 'Precio' },
 };
 
 function formatNumber(value: number, curr: string): string {

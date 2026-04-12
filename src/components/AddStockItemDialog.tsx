@@ -14,23 +14,29 @@ const categories = [
 
 const units = ['un', 'kg', 'g', 'L', 'ml', 'pct', 'cx'];
 
+export interface AddStockItemResult extends StockItem {
+  price: number;
+}
+
 interface AddStockItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (item: StockItem) => void;
+  onAdd: (item: AddStockItemResult) => void;
 }
 
 export function AddStockItemDialog({ open, onOpenChange, onAdd }: AddStockItemDialogProps) {
-  const { t } = useLanguage();
+  const { t, currency } = useLanguage();
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Alimentos');
   const [quantity, setQuantity] = useState('1');
   const [unit, setUnit] = useState('un');
   const [minQuantity, setMinQuantity] = useState('1');
+  const [price, setPrice] = useState('');
 
   const handleAdd = () => {
     if (!name.trim()) return;
-    const item: StockItem = {
+    const priceVal = Math.max(0, Number(price) || 0);
+    const item: AddStockItemResult = {
       id: crypto.randomUUID(),
       product_name: name.trim(),
       category,
@@ -39,7 +45,8 @@ export function AddStockItemDialog({ open, onOpenChange, onAdd }: AddStockItemDi
       min_quantity: Math.max(0, Number(minQuantity) || 1),
       daily_consumption_rate: 0,
       status: 'ok',
-      last_price: 0,
+      last_price: priceVal,
+      price: priceVal,
     };
     onAdd(item);
     resetForm();
@@ -52,6 +59,7 @@ export function AddStockItemDialog({ open, onOpenChange, onAdd }: AddStockItemDi
     setQuantity('1');
     setUnit('un');
     setMinQuantity('1');
+    setPrice('');
   };
 
   return (
@@ -97,7 +105,7 @@ export function AddStockItemDialog({ open, onOpenChange, onAdd }: AddStockItemDi
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">{t('quantity')}</label>
               <Input type="number" min="0" value={quantity} onChange={e => setQuantity(e.target.value)} />
@@ -105,6 +113,10 @@ export function AddStockItemDialog({ open, onOpenChange, onAdd }: AddStockItemDi
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">{t('minQuantity')}</label>
               <Input type="number" min="0" value={minQuantity} onChange={e => setMinQuantity(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">{t('price')} ({currency})</label>
+              <Input type="number" min="0" step="0.01" value={price} onChange={e => setPrice(e.target.value)} placeholder="0.00" />
             </div>
           </div>
         </div>

@@ -99,6 +99,14 @@ const translations: Record<string, Record<Lang, string>> = {
     en: 'Open Settings',
     es: 'Abrir Ajustes',
   },
+  addStockItem: { pt: 'Adicionar Produto', en: 'Add Product', es: 'Agregar Producto' },
+  productName: { pt: 'Nome do produto', en: 'Product name', es: 'Nombre del producto' },
+  productNamePlaceholder: { pt: 'Ex: Arroz, Leite...', en: 'E.g. Rice, Milk...', es: 'Ej: Arroz, Leche...' },
+  category: { pt: 'Categoria', en: 'Category', es: 'Categoría' },
+  unit: { pt: 'Unidade', en: 'Unit', es: 'Unidad' },
+  quantity: { pt: 'Quantidade', en: 'Quantity', es: 'Cantidad' },
+  minQuantity: { pt: 'Qtd. mínima', en: 'Min. quantity', es: 'Cant. mínima' },
+  addItem: { pt: 'Adicionar', en: 'Add', es: 'Agregar' },
 };
 
 function formatNumber(value: number, curr: string): string {

@@ -273,7 +273,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {item.quantity} {item.unit}
-                    {item.estimated_price > 0 && ` · R$ ${item.estimated_price.toFixed(2)}`}
+                    {item.estimated_price > 0 && ` · ${currency} ${item.estimated_price.toFixed(2)}`}
                   </p>
                 </div>
                 <span className="text-xs text-muted-foreground mr-1">{item.category}</span>

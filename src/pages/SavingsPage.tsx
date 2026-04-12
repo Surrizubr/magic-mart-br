@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { getHistory } from '@/data/mockData';
 import { AlertTriangle, Info, MapPin, X, ChevronRight } from 'lucide-react';
 import { PurchaseHistory } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 

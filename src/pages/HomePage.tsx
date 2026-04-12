@@ -3,6 +3,7 @@ import { getStock, getLists, getHistory } from '@/data/mockData';
 import { Plus, ShoppingCart, ScanLine, Share2, Calendar, AlertTriangle, ArrowRight, ChevronRight, ListChecks, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { TabId } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface HomePageProps {
   daysLeft: number;

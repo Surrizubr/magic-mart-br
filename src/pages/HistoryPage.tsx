@@ -6,6 +6,7 @@ import { MapPin, ScanLine, Clock, Pencil, LocateFixed, AlertTriangle } from 'luc
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const categoryColors: Record<string, string> = {
   'Grãos': 'bg-accent text-accent-foreground',

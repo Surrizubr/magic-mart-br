@@ -6,6 +6,7 @@ import { Share2, Check, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ShoppingList } from '@/types';
 import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface SharePageProps {
   onBack?: () => void;

@@ -3,6 +3,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { getHistory } from '@/data/mockData';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { TrendingUp, BarChart3, ShoppingCart, Clock, Calendar } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const CATEGORY_COLORS = [
   'hsl(152, 60%, 42%)',

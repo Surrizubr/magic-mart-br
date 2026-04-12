@@ -124,8 +124,8 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={monthlySpending}>
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(160,10%,45%)' }} axisLine={true} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: 'hsl(160,10%,45%)' }} axisLine={true} tickLine={false} tickFormatter={(v) => `${currency}${v}`} />
-                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} formatter={(v: number) => [`${currency} ${v}`, 'Gasto']} />
+                <YAxis tick={{ fontSize: 10, fill: 'hsl(160,10%,45%)' }} axisLine={true} tickLine={false} tickFormatter={(v) => `${currency}${fc(v).replace(currency + ' ', '')}`} />
+                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} formatter={(v: number) => [fc(v), 'Gasto']} />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(152, 60%, 42%)" />
               </BarChart>
             </ResponsiveContainer>

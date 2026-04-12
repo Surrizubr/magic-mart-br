@@ -211,6 +211,33 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
     });
   };
 
+  const addItem = () => {
+    if (!result) return;
+    const newId = `ai-new-${Date.now()}`;
+    const newItem: ReceiptItem = {
+      id: newId,
+      product_name: 'Novo Produto',
+      quantity: 1,
+      unit: 'un',
+      unit_price: 0,
+      total_price: 0,
+      discount_amount: 0,
+      discounted_price: 0,
+      category: 'Outros',
+    };
+    const newItems = [...result.items, newItem];
+    const newSum = newItems.reduce((s, i) => s + i.total_price, 0);
+    const newDiscountedSum = newItems.reduce((s, i) => s + i.discounted_price, 0);
+    setResult({
+      ...result,
+      items: newItems,
+      items_sum: newSum,
+      discounted_sum: newDiscountedSum,
+      difference: Math.abs(result.receipt_total - newDiscountedSum),
+    });
+    setEditingItem(newId);
+  };
+
   // Mode selection screen
   if (mode === 'choose') {
     return (

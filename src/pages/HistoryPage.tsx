@@ -37,11 +37,13 @@ interface HistoryPageProps {
 
 export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterStore }: HistoryPageProps) {
   const { currency, formatCurrency: fc } = useLanguage();
-  const allHistory = getHistory();
-  const history = filterDate
-    ? allHistory.filter(h => h.purchase_date === filterDate && (!filterStore || h.store_name === filterStore))
-    : allHistory;
-  const totalMonth = history.reduce((sum, h) => sum + h.total_price, 0);
+  const [historyData, setHistoryData] = useState(() => {
+    const allHistory = getHistory();
+    return filterDate
+      ? allHistory.filter(h => h.purchase_date === filterDate && (!filterStore || h.store_name === filterStore))
+      : allHistory;
+  });
+  const totalMonth = historyData.reduce((sum, h) => sum + h.total_price, 0);
 
   // State for edit address dialog
   const [editingStore, setEditingStore] = useState<{ store: string; date: string } | null>(null);

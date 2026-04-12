@@ -46,7 +46,15 @@ Regras:
   Itens sem desconto devem ter discount_amount = 0 e discounted_price = total_price.
   O campo "discount" no nível raiz deve conter a soma de todos os descontos individuais.
 - Categorize cada item: Grãos, Laticínios, Carnes, Frutas, Verduras, Bebidas, Padaria, Limpeza, Higiene, Temperos, Frios, Congelados, Doces, ou Outros.
-- Se múltiplas imagens forem fornecidas, elas são partes do MESMO cupom. Consolide sem duplicar itens.`;
+
+REGRA CRÍTICA PARA MÚLTIPLAS FOTOS:
+Quando múltiplas imagens forem enviadas, elas são partes SEQUENCIAIS do MESMO cupom fiscal longo.
+O usuário foi instruído a fotografar de modo que o ÚLTIMO item visível em uma foto apareça TAMBÉM no INÍCIO da próxima foto, criando uma zona de sobreposição/interseção.
+Você DEVE:
+1. Identificar os itens de sobreposição comparando nomes de produtos, quantidades e preços entre o final de uma imagem e o início da próxima.
+2. REMOVER as duplicatas — incluir cada item apenas UMA VEZ na lista final.
+3. Usar a ordem sequencial das imagens para montar a lista completa de itens na ordem correta do cupom.
+4. Se não encontrar sobreposição clara entre duas fotos consecutivas, inclua todos os itens de ambas mas adicione uma nota no campo "notes" indicando que a sobreposição não foi identificada e pode haver duplicatas.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

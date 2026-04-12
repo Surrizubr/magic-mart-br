@@ -88,7 +88,7 @@ export function SharePage({ onBack }: SharePageProps) {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-bold text-foreground">{l.name}</p>
-                      <p className="text-xs text-muted-foreground">{l.items.length} itens · {currency} {l.estimated_total.toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground">{l.items.length} itens · {fc(l.estimated_total)}</p>
                     </div>
                   </button>
                 );

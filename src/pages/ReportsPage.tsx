@@ -149,7 +149,7 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                     <Cell key={i} fill={entry.fill} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(v: number) => [`${currency} ${v.toFixed(2)}`, '']} />
+                <Tooltip formatter={(v: number) => [`${fc(v)}`, '']} />
               </PieChart>
             </ResponsiveContainer>
             <div className="mt-4 space-y-2">

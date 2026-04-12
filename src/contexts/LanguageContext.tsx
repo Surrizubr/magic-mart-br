@@ -70,11 +70,21 @@ const translations: Record<string, Record<Lang, string>> = {
   menu: { pt: 'Menu', en: 'Menu', es: 'Menú' },
 };
 
+function formatNumber(value: number, curr: string): string {
+  if (curr === 'US$') {
+    // American: dot decimal, comma thousands
+    return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  // Brazilian/European: comma decimal, dot thousands
+  return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 interface LanguageContextType {
   lang: Lang;
   setLang: (l: Lang) => void;
   t: (key: string) => string;
   currency: string;
+  formatCurrency: (value: number) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType>({
@@ -82,6 +92,7 @@ const LanguageContext = createContext<LanguageContextType>({
   setLang: () => {},
   t: (k) => k,
   currency: 'R$',
+  formatCurrency: (v) => `R$ ${v.toFixed(2)}`,
 });
 
 export function LanguageProvider({ children }: { children: ReactNode }) {

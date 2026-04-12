@@ -141,7 +141,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
       const discountMap = new Map<string, { discount_amount: number; discounted_price: number; discount: number }>();
       items.forEach(item => {
         if (item.discount_amount > 0) {
-          discountMap.set(item.id, { discount_amount: item.discount_amount, discounted_price: item.discounted_price, discount: data.discount || 0 });
+          discountMap.set(item.id, { discount_amount: item.discount_amount, discounted_price: item.discounted_price, discount: result.discount || 0 });
         }
       });
       setOriginalDiscounts(discountMap);
@@ -150,11 +150,11 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
       setProgressMsg('Concluído!');
 
       setResult({
-        ...data,
+        ...result,
         items,
         items_sum: itemsSum,
         discounted_sum: discountedSum,
-        difference: Math.abs((data.receipt_total || 0) - discountedSum),
+        difference: Math.abs((result.receipt_total || 0) - discountedSum),
       });
       setStep('results');
     } catch (err: any) {

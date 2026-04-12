@@ -40,6 +40,7 @@ interface AIReceiptResult {
 interface ScannerPageProps {
   onBack?: () => void;
   onNavigateToHistory?: (date: string, store: string) => void;
+  onOpenMenu?: () => void;
 }
 
 export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {

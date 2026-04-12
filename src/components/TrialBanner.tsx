@@ -16,7 +16,7 @@ export function TrialBanner({ daysLeft, onUpgrade }: TrialBannerProps) {
         <p className="text-xs text-amber-800">
           <span className="font-semibold">{daysLeft} dia{daysLeft !== 1 ? 's' : ''}</span> restante{daysLeft !== 1 ? 's' : ''} do período de teste
         </p>
-        <p className="text-[10px] text-amber-600 mt-0.5">Toque para assinar o Premium</p>
+        
       </div>
     </button>
   );

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { recalculateAllConsumptionRates } from '@/lib/consumptionCalculator';
 
 type ScanMode = 'choose' | 'single' | 'multi' | 'history';
 type ScanStep = 'capture' | 'processing' | 'results';
@@ -209,6 +210,9 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
       }
     });
     localStorage.setItem('stock_items', JSON.stringify(existingStock));
+
+    // Recalculate consumption rates based on purchase history
+    recalculateAllConsumptionRates();
 
     setSaved(true);
   };

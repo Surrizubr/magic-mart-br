@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getStock } from '@/data/mockData';
-import { Plus, Minus, Search, Pencil, ShoppingCart } from 'lucide-react';
+import { Plus, Minus, Search, Pencil, ShoppingCart, Brain } from 'lucide-react';
 import { StockItem } from '@/types';
+import { recalculateAllConsumptionRates } from '@/lib/consumptionCalculator';
 
 type StatusFilter = 'all' | 'critical' | 'low' | 'ok';
 
@@ -27,7 +28,10 @@ interface StockPageProps {
 export function StockPage({ onBack }: StockPageProps) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<StatusFilter>('all');
-  const [stock, setStock] = useState<StockItem[]>(() => getStock());
+  const [stock, setStock] = useState<StockItem[]>(() => {
+    recalculateAllConsumptionRates();
+    return getStock();
+  });
   const [editingQtyId, setEditingQtyId] = useState<string | null>(null);
   const [editingQtyValue, setEditingQtyValue] = useState('');
 
@@ -135,6 +139,12 @@ export function StockPage({ onBack }: StockPageProps) {
                     </div>
                     <p className="text-[11px] text-muted-foreground mt-1">· comprado 0d atrás</p>
                     <p className="text-[11px] font-medium text-warning mt-0.5">· ~{daysLeft}d restantes</p>
+                    {(s as any).learned_consumption && (
+                      <p className="text-[10px] text-primary mt-0.5 flex items-center gap-1">
+                        <Brain className="w-3 h-3" />
+                        Consumo aprendido ({(s as any).purchase_count} compras, ~{(s as any).avg_duration_days}d por ciclo)
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex flex-col items-end gap-1">

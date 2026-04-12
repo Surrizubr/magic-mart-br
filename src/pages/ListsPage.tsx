@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { recalculateAllConsumptionRates } from '@/lib/consumptionCalculator';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getLists } from '@/data/mockData';
@@ -57,6 +58,7 @@ export function ListsPage({ onBack }: ListsPageProps) {
       }
     });
     localStorage.setItem('stock_items', JSON.stringify(existingStock));
+    recalculateAllConsumptionRates();
     const history = JSON.parse(localStorage.getItem('purchase_history') || '[]');
     checkedItems.forEach(item => {
       history.push({

@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { recalculateAllConsumptionRates } from '@/lib/consumptionCalculator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { ArrowLeft, ListChecks, Camera, Search, MapPin, X, Plus, Minus, ShoppingCart, XCircle, CheckCircle } from 'lucide-react';
@@ -145,6 +146,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
       }
     });
     localStorage.setItem('stock_items', JSON.stringify(existing));
+    recalculateAllConsumptionRates();
 
     // Save to history
     const history: any[] = JSON.parse(localStorage.getItem('purchase_history') || '[]');

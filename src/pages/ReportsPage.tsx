@@ -18,6 +18,7 @@ const CATEGORY_COLORS = [
 
 interface ReportsPageProps {
   onBack?: () => void;
+  onNavigate?: (tab: string) => void;
 }
 
 export function ReportsPage({ onBack }: ReportsPageProps) {

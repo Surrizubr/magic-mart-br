@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { recalculateAllConsumptionRates } from '@/lib/consumptionCalculator';
+import { REMINDER_LIST_NAME_CONST } from '@/lib/reminderList';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getLists } from '@/data/mockData';
@@ -26,6 +27,11 @@ export function ListsPage({ onBack }: ListsPageProps) {
     if (filter === 'active') return l.status === 'active' || l.status === 'shopping';
     if (filter === 'completed') return l.status === 'completed';
     return l.status === 'archived';
+  }).sort((a, b) => {
+    // "Lembrete de Compras" always on top
+    if (a.name === REMINDER_LIST_NAME_CONST) return -1;
+    if (b.name === REMINDER_LIST_NAME_CONST) return 1;
+    return 0;
   });
 
   const createList = () => {

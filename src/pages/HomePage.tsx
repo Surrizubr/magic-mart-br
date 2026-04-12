@@ -1,9 +1,12 @@
 import { motion } from 'framer-motion';
 import { getStock, getLists, getHistory } from '@/data/mockData';
-import { Plus, ShoppingCart, ScanLine, Share2, Calendar, AlertTriangle, ArrowRight, ChevronRight, ListChecks, Settings } from 'lucide-react';
+import { Plus, ShoppingCart, ScanLine, Share2, Calendar, AlertTriangle, ArrowRight, ChevronRight, ListChecks, Settings, Trash2, Archive } from 'lucide-react';
 import { useState } from 'react';
-import { TabId } from '@/types';
+import { TabId, ShoppingList, StockItem } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { SwipeableRow } from '@/components/SwipeableRow';
+import { addToReminderList } from '@/lib/reminderList';
+import { toast } from 'sonner';
 
 interface HomePageProps {
   daysLeft: number;
@@ -23,12 +26,43 @@ const item = {
 
 export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePageProps) {
   const { currency } = useLanguage();
-  const stock = getStock();
-  const lists = getLists();
+  const [stockState, setStockState] = useState<StockItem[]>(() => getStock());
+  const [listsState, setListsState] = useState<ShoppingList[]>(() => getLists());
   const history = getHistory();
-  const criticalStock = stock.filter(s => s.status === 'critical' || s.status === 'low');
-  const activeLists = lists.filter(l => l.status === 'active' || l.status === 'shopping');
+  const criticalStock = stockState.filter(s => s.status === 'critical' || s.status === 'low');
+  const activeLists = listsState.filter(l => l.status === 'active' || l.status === 'shopping');
   const totalMonth = history.reduce((sum, h) => sum + h.total_price, 0);
+
+  const handleDeleteList = (id: string) => {
+    setListsState(prev => {
+      const updated = prev.filter(l => l.id !== id);
+      localStorage.setItem('shopping_lists', JSON.stringify(updated));
+      return updated;
+    });
+    toast.success('Lista excluída.');
+  };
+
+  const handleArchiveList = (id: string) => {
+    setListsState(prev => {
+      const updated = prev.map(l => l.id === id ? { ...l, status: 'archived' as const } : l);
+      localStorage.setItem('shopping_lists', JSON.stringify(updated));
+      return updated;
+    });
+    toast.success('Lista arquivada.');
+  };
+
+  const handleDeleteAlert = (id: string) => {
+    setStockState(prev => {
+      const updated = prev.filter(s => s.id !== id);
+      localStorage.setItem('stock_items', JSON.stringify(updated));
+      return updated;
+    });
+    toast.success('Alerta removido.');
+  };
+
+  const handleAddAlertToReminder = (s: StockItem) => {
+    addToReminderList({ product_name: s.product_name, category: s.category, unit: s.unit, last_price: s.last_price });
+  };
   const today = new Date();
   const dateStr = today.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -59,7 +93,7 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
         <motion.div variants={item} className="flex gap-3">
           <button onClick={() => onNavigate('stock')} className="flex-1 bg-card rounded-xl border border-border p-3 text-center hover:bg-accent/50 transition-colors">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Estoque</p>
-            <p className="text-2xl font-bold text-foreground">{stock.length}</p>
+            <p className="text-2xl font-bold text-foreground">{stockState.length}</p>
             <p className="text-[10px] text-muted-foreground uppercase">Itens</p>
           </button>
           <button onClick={() => onNavigate('lists')} className="flex-1 bg-card rounded-xl border border-primary/30 p-3 text-center hover:bg-accent/50 transition-colors">
@@ -145,20 +179,26 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
           ) : (
             <div className="max-h-[280px] overflow-y-auto pr-1 space-y-2" style={{ scrollbarWidth: 'thin' }}>
               {activeLists.slice(0, 5).map(l => (
-                <button
+                <SwipeableRow
                   key={l.id}
-                  onClick={() => onNavigate('lists')}
-                  className="w-full bg-card rounded-xl border border-border p-4 flex items-center gap-3 text-left"
+                  onSwipeLeft={() => handleDeleteList(l.id)}
+                  onSwipeRight={() => handleArchiveList(l.id)}
+                  rightIcon={<Archive className="w-5 h-5 text-primary-foreground" />}
                 >
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <ListChecks className="w-4 h-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-foreground">{l.name}</p>
-                    <p className="text-xs text-muted-foreground">{l.items.length} itens · {currency} {l.estimated_total.toFixed(2)}</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                </button>
+                  <button
+                    onClick={() => onNavigate('lists')}
+                    className="w-full bg-card rounded-xl border border-border p-4 flex items-center gap-3 text-left"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <ListChecks className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-foreground">{l.name}</p>
+                      <p className="text-xs text-muted-foreground">{l.items.length} itens · {currency} {l.estimated_total.toFixed(2)}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  </button>
+                </SwipeableRow>
               ))}
             </div>
           )}
@@ -188,18 +228,25 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
               {criticalStock.slice(0, 5).map(s => {
                 const daysLeft = s.daily_consumption_rate > 0 ? Math.ceil(s.quantity / s.daily_consumption_rate) : 99;
                 return (
-                  <div key={s.id} className="bg-card rounded-xl border border-border p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-warning/10 flex items-center justify-center shrink-0 mt-0.5">
-                        <AlertTriangle className="w-4 h-4 text-warning" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-foreground uppercase">{s.product_name}</p>
-                        <p className="text-xs font-semibold text-warning">~{daysLeft} dias restantes</p>
-                        <p className="text-xs text-muted-foreground">Estoque: {s.quantity} {s.unit}</p>
+                  <SwipeableRow
+                    key={s.id}
+                    onSwipeLeft={() => handleDeleteAlert(s.id)}
+                    onSwipeRight={() => handleAddAlertToReminder(s)}
+                    rightIcon={<ShoppingCart className="w-5 h-5 text-primary-foreground" />}
+                  >
+                    <div className="bg-card rounded-xl border border-border p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-warning/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <AlertTriangle className="w-4 h-4 text-warning" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-foreground uppercase">{s.product_name}</p>
+                          <p className="text-xs font-semibold text-warning">~{daysLeft} dias restantes</p>
+                          <p className="text-xs text-muted-foreground">Estoque: {s.quantity} {s.unit}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </SwipeableRow>
                 );
               })}
             </div>

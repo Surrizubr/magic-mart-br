@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Palette, Globe, Settings, Info, LogOut, RotateCcw, Trash2, Sun, Moon, Type, ChevronRight, ArrowLeft, Check } from 'lucide-react';
+import { X, Palette, Globe, Settings, Info, LogOut, RotateCcw, Trash2, Sun, Moon, Type, ChevronRight, ArrowLeft, Check, Key, ClipboardPaste, Save } from 'lucide-react';
 import { useTheme, ThemeMode } from '@/contexts/ThemeContext';
 import { useLanguage, Lang } from '@/contexts/LanguageContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { supabase } from '@/integrations/supabase/client';
 import { resetAllData } from '@/data/mockData';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +19,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-type SubMenu = null | 'themes' | 'languages' | 'preferences' | 'about';
+type SubMenu = null | 'themes' | 'languages' | 'preferences' | 'about' | 'gemini';
 
 interface AppMenuProps {
   open: boolean;
@@ -32,6 +33,8 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
   const [subMenu, setSubMenu] = useState<SubMenu>(null);
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [geminiKey, setGeminiKey] = useState('');
+  const [geminiHasKey, setGeminiHasKey] = useState(() => !!localStorage.getItem('gemini-api-key'));
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -48,17 +51,46 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
   };
 
   const handleDeleteAccount = async () => {
-    // In a real app, call an edge function to delete the user
     await supabase.auth.signOut();
     setConfirmDelete(false);
     navigate('/');
     onClose();
   };
 
+  const handleGeminiPaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) setGeminiKey(text);
+    } catch {
+      toast.error('Não foi possível acessar a área de transferência.');
+    }
+  };
+
+  const handleGeminiSave = () => {
+    if (!geminiKey.trim()) return;
+    localStorage.setItem('gemini-api-key', geminiKey.trim());
+    setGeminiHasKey(true);
+    toast.success(t('geminiApiKeySaved'));
+  };
+
+  const handleGeminiDelete = () => {
+    localStorage.removeItem('gemini-api-key');
+    setGeminiKey('');
+    setGeminiHasKey(false);
+    toast.success(t('geminiApiKeyDeleted'));
+  };
+
+  const openGeminiMenu = () => {
+    const saved = localStorage.getItem('gemini-api-key');
+    setGeminiKey(saved || '');
+    setSubMenu('gemini');
+  };
+
   const menuItems = [
     { id: 'themes' as SubMenu, icon: Palette, label: t('themes'), desc: t('themeDesc') },
     { id: 'languages' as SubMenu, icon: Globe, label: t('languages'), desc: t('langDesc') },
     { id: 'preferences' as SubMenu, icon: Settings, label: t('preferences'), desc: t('prefDesc') },
+    { id: 'gemini' as SubMenu, icon: Key, label: t('geminiApiKey'), desc: geminiHasKey ? t('geminiConfigured') : t('geminiNotConfigured') },
     { id: 'about' as SubMenu, icon: Info, label: t('about'), desc: t('aboutDesc') },
   ];
 
@@ -134,6 +166,46 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
           </div>
         );
 
+      case 'gemini':
+        return (
+          <div className="space-y-4">
+            <div className="bg-card rounded-xl border border-border p-4">
+              <p className="text-xs text-muted-foreground mb-3">{t('geminiApiKeyDesc')}</p>
+              <input
+                type="password"
+                value={geminiKey}
+                readOnly
+                placeholder={t('geminiPlaceholder')}
+                className="w-full p-3 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                onKeyDown={(e) => e.preventDefault()}
+              />
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={handleGeminiPaste}
+                  className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg bg-primary/10 border border-primary/30 text-primary text-sm font-medium hover:bg-primary/20 transition-colors"
+                >
+                  <ClipboardPaste className="w-4 h-4" />
+                  {t('geminiPaste')}
+                </button>
+                <button
+                  onClick={handleGeminiDelete}
+                  className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm font-medium hover:bg-destructive/20 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {t('geminiDelete')}
+                </button>
+                <button
+                  onClick={handleGeminiSave}
+                  className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                  {t('geminiSave')}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
       case 'about':
         return (
           <div className="space-y-4 text-center">
@@ -176,7 +248,6 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
               className="fixed right-0 top-0 bottom-0 w-[85%] max-w-sm bg-background z-50 shadow-2xl overflow-y-auto"
             >
               <div className="p-4">
-                {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                   {subMenu ? (
                     <button onClick={() => setSubMenu(null)} className="p-1">
@@ -202,7 +273,7 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
                     {menuItems.map((item) => (
                       <button
                         key={item.id}
-                        onClick={() => setSubMenu(item.id)}
+                        onClick={() => item.id === 'gemini' ? openGeminiMenu() : setSubMenu(item.id)}
                         className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:bg-accent transition-colors"
                       >
                         <item.icon className="w-5 h-5 text-primary" />

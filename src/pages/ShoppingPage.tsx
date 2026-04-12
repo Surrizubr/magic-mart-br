@@ -330,7 +330,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
             <ShoppingCart className="w-5 h-5 text-primary" />
             <span className="text-sm font-medium text-foreground">{items.length} itens</span>
           </div>
-          <span className="text-lg font-bold text-primary">R$ {total.toFixed(2)}</span>
+          <span className="text-lg font-bold text-primary">{currency} {total.toFixed(2)}</span>
         </div>
       </div>
 
@@ -471,7 +471,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
             >
               <div className="flex-1">
                 <p className="text-sm font-medium text-foreground">{item.product_name}</p>
-                <p className="text-xs text-muted-foreground">{item.category} · R$ {item.price.toFixed(2)}/{item.unit}</p>
+                <p className="text-xs text-muted-foreground">{item.category} · {currency} {item.price.toFixed(2)}/{item.unit}</p>
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 rounded-full bg-accent flex items-center justify-center">

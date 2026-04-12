@@ -48,6 +48,7 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [originalDiscounts, setOriginalDiscounts] = useState<Map<string, { discount_amount: number; discounted_price: number; discount: number }>>(new Map());
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {

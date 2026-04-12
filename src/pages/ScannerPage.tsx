@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { Camera, Images, X, Loader2, Check, ArrowLeft, Package, MapPin, Trash2, AlertTriangle, Edit2, Plus, History, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 
 type ScanMode = 'choose' | 'single' | 'multi' | 'history';
@@ -43,6 +44,8 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
   const [step, setStep] = useState<ScanStep>('capture');
   const [images, setImages] = useState<string[]>([]);
   const [progressMsg, setProgressMsg] = useState('');
+  const [progressPercent, setProgressPercent] = useState(0);
+  const [dateError, setDateError] = useState(false);
   const [result, setResult] = useState<AIReceiptResult | null>(null);
   const [saved, setSaved] = useState(false);
   const [editingItem, setEditingItem] = useState<string | null>(null);
@@ -88,13 +91,20 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
 
   const processImages = async (imgs: string[]) => {
     setStep('processing');
-    setProgressMsg('Enviando imagens para análise com IA...');
+    setProgressPercent(10);
+    setProgressMsg('Enviando imagens para análise...');
     setError(null);
 
     try {
+      setProgressPercent(25);
+      setProgressMsg('Imagens enviadas. Aguardando processamento da IA...');
+
       const { data, error: fnError } = await supabase.functions.invoke('analyze-receipt', {
         body: { images: imgs },
       });
+
+      setProgressPercent(70);
+      setProgressMsg('Resposta recebida. Processando itens...');
 
       if (fnError) {
         throw new Error(fnError.message || 'Erro ao analisar cupom');
@@ -103,6 +113,9 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
       if (data?.error) {
         throw new Error(data.error);
       }
+
+      setProgressPercent(85);
+      setProgressMsg('Organizando produtos e calculando totais...');
 
       // Add IDs to items
       const items: ReceiptItem[] = (data.items || []).map((item: any, i: number) => ({
@@ -124,6 +137,9 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
       });
       setOriginalDiscounts(discountMap);
 
+      setProgressPercent(100);
+      setProgressMsg('Concluído!');
+
       setResult({
         ...data,
         items,
@@ -141,6 +157,13 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
 
   const handleSave = () => {
     if (!result) return;
+    
+    // Validate date
+    if (!result.date || result.date.trim() === '' || isNaN(new Date(result.date + 'T12:00:00').getTime())) {
+      setDateError(true);
+      return;
+    }
+    setDateError(false);
 
     const receiptId = `receipt_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 

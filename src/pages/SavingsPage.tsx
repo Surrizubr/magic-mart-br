@@ -45,7 +45,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
   // Weekly: count unique stores per weekday
   const weekStores: Record<number, Record<string, StoreInfo>> = {};
   weekHistory.forEach(h => {
-    const d = new Date(h.purchase_date);
+    const d = new Date(h.purchase_date + 'T12:00:00');
     const day = (d.getDay() + 6) % 7;
     if (!weekStores[day]) weekStores[day] = {};
     const store = h.store_name;
@@ -67,7 +67,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
   // Monthly: group by day of month, count unique stores
   const dayPurchases: Record<number, PurchaseHistory[]> = {};
   monthHistory.forEach(h => {
-    const d = new Date(h.purchase_date);
+    const d = new Date(h.purchase_date + 'T12:00:00');
     const day = d.getDate();
     (dayPurchases[day] ||= []).push(h);
   });

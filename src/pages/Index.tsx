@@ -77,7 +77,7 @@ const Index = () => {
       </AnimatePresence>
 
       {/* Banners inline at the bottom of content, before bottom nav padding */}
-      {showBanners && activeTab === 'home' && (
+      {showBanners && (
         <div className="pb-20 px-0">
           <PremiumBanner onUpgrade={openCheckout} />
           {isTrial && <TrialBanner daysLeft={daysLeft} onUpgrade={openCheckout} />}

@@ -43,7 +43,7 @@ interface ScannerPageProps {
   onOpenMenu?: () => void;
 }
 
-export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
+export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: ScannerPageProps) {
   const { currency, formatCurrency: fc, t } = useLanguage();
   const [mode, setMode] = useState<ScanMode>('choose');
   const [step, setStep] = useState<ScanStep>('capture');

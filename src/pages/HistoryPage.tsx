@@ -197,18 +197,25 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                         const catColor = categoryColors[item.category] || 'bg-accent text-accent-foreground';
                         const catIcon = categoryIcons[item.category] || '🛒';
                         return (
-                          <div key={item.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                            <div>
-                              <p className="text-sm font-medium text-foreground">{item.product_name}</p>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${catColor} flex items-center gap-1`}>
-                                  {catIcon} {item.category}
-                                </span>
-                                <span className="text-xs text-muted-foreground">{item.quantity} un</span>
+                          <SwipeableRow
+                            key={item.id}
+                            onSwipeLeft={() => handleDeleteItem(item.id)}
+                            leftIcon={<Trash2 className="w-5 h-5 text-destructive-foreground" />}
+                            leftBg="bg-destructive"
+                          >
+                            <div className="flex items-center justify-between py-2 border-b border-border/50 last:border-0 bg-background">
+                              <div>
+                                <p className="text-sm font-medium text-foreground">{item.product_name}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${catColor} flex items-center gap-1`}>
+                                    {catIcon} {item.category}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">{item.quantity} un</span>
+                                </div>
                               </div>
+                              <p className="text-sm font-bold text-foreground">{fc(item.total_price)}</p>
                             </div>
-                            <p className="text-sm font-bold text-foreground">{fc(item.total_price)}</p>
-                          </div>
+                          </SwipeableRow>
                         );
                       })}
                     </div>

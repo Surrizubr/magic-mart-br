@@ -171,20 +171,7 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
         return (
           <div className="space-y-4">
             <div className="bg-card rounded-xl border border-border p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <p className="text-xs text-muted-foreground">{t('geminiApiKeyDesc')}</p>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="p-1 rounded-full hover:bg-accent transition-colors shrink-0">
-                      <HelpCircle className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-72 text-sm">
-                    <p className="font-semibold text-foreground mb-2">{t('geminiHelpTitle')}</p>
-                    <p className="text-xs text-muted-foreground whitespace-pre-line">{t('geminiHelpSteps')}</p>
-                  </PopoverContent>
-                </Popover>
-              </div>
+              <p className="text-xs text-muted-foreground mb-3">{t('geminiApiKeyDesc')}</p>
               <input
                 type="text"
                 value={geminiKey}
@@ -215,6 +202,13 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
                   {t('geminiSave')}
                 </button>
               </div>
+            </div>
+            <div className="bg-accent/50 rounded-xl border border-border p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <HelpCircle className="w-4 h-4 text-primary shrink-0" />
+                <p className="text-sm font-semibold text-foreground">{t('geminiHelpTitle')}</p>
+              </div>
+              <p className="text-xs text-muted-foreground whitespace-pre-line">{t('geminiHelpSteps')}</p>
             </div>
           </div>
         );

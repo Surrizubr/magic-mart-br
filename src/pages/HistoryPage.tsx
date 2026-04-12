@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getHistory } from '@/data/mockData';
-import { MapPin, ScanLine, Clock, Pencil, LocateFixed, AlertTriangle } from 'lucide-react';
+import { MapPin, ScanLine, Clock, Pencil, LocateFixed, AlertTriangle, Trash2 } from 'lucide-react';
+import { SwipeableRow } from '@/components/SwipeableRow';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -36,11 +37,13 @@ interface HistoryPageProps {
 
 export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterStore }: HistoryPageProps) {
   const { currency, formatCurrency: fc } = useLanguage();
-  const allHistory = getHistory();
-  const history = filterDate
-    ? allHistory.filter(h => h.purchase_date === filterDate && (!filterStore || h.store_name === filterStore))
-    : allHistory;
-  const totalMonth = history.reduce((sum, h) => sum + h.total_price, 0);
+  const [historyData, setHistoryData] = useState(() => {
+    const allHistory = getHistory();
+    return filterDate
+      ? allHistory.filter(h => h.purchase_date === filterDate && (!filterStore || h.store_name === filterStore))
+      : allHistory;
+  });
+  const totalMonth = historyData.reduce((sum, h) => sum + h.total_price, 0);
 
   // State for edit address dialog
   const [editingStore, setEditingStore] = useState<{ store: string; date: string } | null>(null);
@@ -48,7 +51,14 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
   const [editDate, setEditDate] = useState('');
   const [geoLoading, setGeoLoading] = useState(false);
 
-  const grouped = history.reduce<Record<string, typeof history>>((acc, h) => {
+  const handleDeleteItem = (itemId: string) => {
+    const allHistory = getHistory();
+    const updated = allHistory.filter(h => h.id !== itemId);
+    localStorage.setItem('purchase_history', JSON.stringify(updated));
+    setHistoryData(prev => prev.filter(h => h.id !== itemId));
+  };
+
+  const grouped = historyData.reduce<Record<string, typeof historyData>>((acc, h) => {
     (acc[h.purchase_date] ||= []).push(h);
     return acc;
   }, {});
@@ -187,18 +197,25 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                         const catColor = categoryColors[item.category] || 'bg-accent text-accent-foreground';
                         const catIcon = categoryIcons[item.category] || '🛒';
                         return (
-                          <div key={item.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                            <div>
-                              <p className="text-sm font-medium text-foreground">{item.product_name}</p>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${catColor} flex items-center gap-1`}>
-                                  {catIcon} {item.category}
-                                </span>
-                                <span className="text-xs text-muted-foreground">{item.quantity} un</span>
+                          <SwipeableRow
+                            key={item.id}
+                            onSwipeLeft={() => handleDeleteItem(item.id)}
+                            leftIcon={<Trash2 className="w-5 h-5 text-destructive-foreground" />}
+                            leftBg="bg-destructive"
+                          >
+                            <div className="flex items-center justify-between py-2 border-b border-border/50 last:border-0 bg-background">
+                              <div>
+                                <p className="text-sm font-medium text-foreground">{item.product_name}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${catColor} flex items-center gap-1`}>
+                                    {catIcon} {item.category}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">{item.quantity} un</span>
+                                </div>
                               </div>
+                              <p className="text-sm font-bold text-foreground">{fc(item.total_price)}</p>
                             </div>
-                            <p className="text-sm font-bold text-foreground">{fc(item.total_price)}</p>
-                          </div>
+                          </SwipeableRow>
                         );
                       })}
                     </div>

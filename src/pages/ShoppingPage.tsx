@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { ArrowLeft, ListChecks, Camera, Search, MapPin, X, Plus, Minus, ShoppingCart, XCircle, CheckCircle } from 'lucide-react';
 import { TabId } from '@/types';
 import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type ShoppingMode = null | 'list' | 'register' | 'category';
 
@@ -27,6 +28,7 @@ interface ShoppingPageProps {
 }
 
 export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
+  const { currency } = useLanguage();
   const [mode, setMode] = useState<ShoppingMode>(null);
   const [storeName, setStoreName] = useState('');
   const [storeSet, setStoreSet] = useState(false);

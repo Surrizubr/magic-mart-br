@@ -5,6 +5,7 @@ import { Camera, Images, X, Loader2, Check, ArrowLeft, Package, MapPin, Trash2, 
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type ScanMode = 'choose' | 'single' | 'multi' | 'history';
 type ScanStep = 'capture' | 'processing' | 'results';
@@ -40,6 +41,7 @@ interface ScannerPageProps {
 }
 
 export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
+  const { currency } = useLanguage();
   const [mode, setMode] = useState<ScanMode>('choose');
   const [step, setStep] = useState<ScanStep>('capture');
   const [images, setImages] = useState<string[]>([]);

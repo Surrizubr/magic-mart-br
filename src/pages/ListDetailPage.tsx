@@ -16,7 +16,7 @@ interface ListDetailPageProps {
 }
 
 export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }: ListDetailPageProps) {
-  const { currency } = useLanguage();
+  const { currency, formatCurrency: fc } = useLanguage();
   const [items, setItems] = useState<ShoppingListItem[]>(list.items);
   const [showAddItem, setShowAddItem] = useState(false);
   const [newProduct, setNewProduct] = useState('');

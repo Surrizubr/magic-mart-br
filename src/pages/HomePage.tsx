@@ -25,7 +25,7 @@ const item = {
 };
 
 export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePageProps) {
-  const { currency } = useLanguage();
+  const { currency, formatCurrency: fc } = useLanguage();
   const [stockState, setStockState] = useState<StockItem[]>(() => getStock());
   const [listsState, setListsState] = useState<ShoppingList[]>(() => getLists());
   const history = getHistory();
@@ -103,7 +103,7 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
           </button>
           <button onClick={() => onNavigate('history')} className="flex-1 bg-card rounded-xl border border-border p-3 text-center hover:bg-accent/50 transition-colors">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Histórico</p>
-            <p className="text-xl font-bold text-foreground">{currency} {totalMonth.toFixed(2)}</p>
+            <p className="text-xl font-bold text-foreground">{fc(totalMonth)}</p>
             <p className="text-[10px] text-muted-foreground uppercase">Mês Atual</p>
           </button>
         </motion.div>
@@ -194,7 +194,7 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-foreground">{l.name}</p>
-                      <p className="text-xs text-muted-foreground">{l.items.length} itens · {currency} {l.estimated_total.toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground">{l.items.length} itens · {fc(l.estimated_total)}</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
                   </button>

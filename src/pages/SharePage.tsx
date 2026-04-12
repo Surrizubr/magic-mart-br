@@ -19,20 +19,20 @@ function formatListForWhatsApp(list: ShoppingList, currency: string): string {
   } else {
     list.items.forEach((item, i) => {
       const checked = item.is_checked ? '✅' : '⬜';
-      const price = item.estimated_price > 0 ? ` - ${currency} ${item.estimated_price.toFixed(2)}` : '';
+      const price = item.estimated_price > 0 ? ` - ${fc(item.estimated_price)}` : '';
       text += `${checked} ${item.quantity} ${item.unit} ${item.product_name}${price}\n`;
     });
   }
   const total = list.items.reduce((s, it) => s + it.estimated_price * it.quantity, 0);
   if (total > 0) {
-    text += `\n💰 *Total estimado: ${currency} ${total.toFixed(2)}*`;
+    text += `\n💰 *Total estimado: ${fc(total)}*`;
   }
   text += '\n\n_Enviado via Magicmart AI 🌿_';
   return text;
 }
 
 export function SharePage({ onBack }: SharePageProps) {
-  const { currency } = useLanguage();
+  const { currency, formatCurrency: fc } = useLanguage();
   const lists = getLists().filter(l => l.status === 'active' || l.status === 'shopping');
   const [selected, setSelected] = useState<string[]>([]);
 

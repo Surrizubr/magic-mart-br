@@ -35,7 +35,7 @@ interface SavingsPageProps {
 }
 
 export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
-  const { currency } = useLanguage();
+  const { currency, formatCurrency: fc } = useLanguage();
   const allHistory = getHistory();
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedWeekDay, setSelectedWeekDay] = useState<number | null>(null);
@@ -301,7 +301,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground truncate">{store}</p>
                         <p className="text-xs text-muted-foreground">
-                          {info.count} {info.count === 1 ? 'item' : 'itens'} · {currency} {info.total.toFixed(2)}
+                          {info.count} {info.count === 1 ? 'item' : 'itens'} · {fc(info.total)}
                         </p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />

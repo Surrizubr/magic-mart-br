@@ -46,7 +46,7 @@ export function SharePage({ onBack }: SharePageProps) {
       toast.error('Selecione pelo menos uma lista');
       return;
     }
-    const text = listsToShare.map(l => formatListForWhatsApp(l, currency)).join('\n\n---\n\n');
+    const text = listsToShare.map(l => formatListForWhatsApp(l, currency, fc)).join('\n\n---\n\n');
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };

@@ -16,6 +16,7 @@ const features = [
 ];
 
 export function TrialWelcome({ onStartTrial }: TrialWelcomeProps) {
+  const { currency } = useLanguage();
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <motion.div
@@ -66,8 +67,8 @@ export function TrialWelcome({ onStartTrial }: TrialWelcomeProps) {
           transition={{ delay: 0.7 }}
           className="gradient-primary rounded-lg p-4 text-center text-primary-foreground"
         >
-          <p className="text-2xl font-bold">R$ 49,90<span className="text-sm font-normal">/ano</span></p>
-          <p className="text-xs opacity-90">Menos de R$ 4,16 por mês</p>
+          <p className="text-2xl font-bold">{currency} 49,90<span className="text-sm font-normal">/ano</span></p>
+          <p className="text-xs opacity-90">Menos de {currency} 4,16 por mês</p>
         </motion.div>
 
         <motion.div

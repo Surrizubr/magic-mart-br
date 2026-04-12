@@ -1,6 +1,12 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export type Lang = 'pt' | 'en' | 'es';
+
+const currencyByLang: Record<Lang, string> = {
+  pt: 'R$',
+  en: 'US$',
+  es: '$',
+};
 
 const translations: Record<string, Record<Lang, string>> = {
   hello: { pt: 'Olá', en: 'Hello', es: 'Hola' },
@@ -68,18 +74,58 @@ interface LanguageContextType {
   lang: Lang;
   setLang: (l: Lang) => void;
   t: (key: string) => string;
+  currency: string;
 }
 
 const LanguageContext = createContext<LanguageContextType>({
   lang: 'pt',
   setLang: () => {},
   t: (k) => k,
+  currency: 'R$',
 });
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() =>
     (localStorage.getItem('app-lang') as Lang) || 'pt'
   );
+  const [isEurope, setIsEurope] = useState<boolean>(() => {
+    return localStorage.getItem('app-region') === 'europe';
+  });
+
+  // Detect if user is in Europe on mount
+  useEffect(() => {
+    const cached = localStorage.getItem('app-region');
+    if (cached) return; // already detected
+
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=en`,
+              { headers: { 'User-Agent': 'MagicmartAI/1.0' } }
+            );
+            const data = await res.json();
+            const country = data?.address?.country_code?.toLowerCase() || '';
+            const europeanCountries = [
+              'at','be','bg','hr','cy','cz','dk','ee','fi','fr','de','gr','hu',
+              'ie','it','lv','lt','lu','mt','nl','pl','pt','ro','sk','si','es',
+              'se','gb','no','ch','is'
+            ];
+            const inEurope = europeanCountries.includes(country);
+            localStorage.setItem('app-region', inEurope ? 'europe' : 'other');
+            setIsEurope(inEurope);
+          } catch {
+            localStorage.setItem('app-region', 'other');
+          }
+        },
+        () => {
+          localStorage.setItem('app-region', 'other');
+        },
+        { timeout: 5000 }
+      );
+    }
+  }, []);
 
   const setLang = (l: Lang) => {
     localStorage.setItem('app-lang', l);
@@ -88,8 +134,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const t = (key: string) => translations[key]?.[lang] || key;
 
+  // Currency: pt/es in Europe → €, otherwise default by lang
+  const currency = (lang === 'pt' || lang === 'es') && isEurope ? '€' : currencyByLang[lang];
+
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t }}>
+    <LanguageContext.Provider value={{ lang, setLang, t, currency }}>
       {children}
     </LanguageContext.Provider>
   );

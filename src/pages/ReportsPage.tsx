@@ -3,6 +3,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { getHistory } from '@/data/mockData';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { TrendingUp, BarChart3, ShoppingCart, Clock, Calendar } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const CATEGORY_COLORS = [
   'hsl(152, 60%, 42%)',
@@ -22,6 +23,7 @@ interface ReportsPageProps {
 }
 
 export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
+  const { currency } = useLanguage();
   const history = getHistory();
   const currentMonth = history.reduce((sum, h) => sum + h.total_price, 0);
 
@@ -92,12 +94,12 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-card rounded-xl border border-border p-4">
             <TrendingUp className="w-5 h-5 text-primary mb-2" />
-            <p className="text-xl font-bold text-foreground">R$ {currentMonth.toFixed(2)}</p>
+            <p className="text-xl font-bold text-foreground">{currency} {currentMonth.toFixed(2)}</p>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Este Mês</p>
           </div>
           <div className="bg-card rounded-xl border border-border p-4">
             <BarChart3 className="w-5 h-5 text-primary mb-2" />
-            <p className="text-xl font-bold text-foreground">R$ {currentMonth.toFixed(2)}</p>
+            <p className="text-xl font-bold text-foreground">{currency} {currentMonth.toFixed(2)}</p>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Média/Mês</p>
           </div>
           <button onClick={() => onNavigate?.('history')} className="bg-card rounded-xl border border-border p-4 text-left hover:bg-accent/50 transition-colors">
@@ -121,8 +123,8 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={monthlySpending}>
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(160,10%,45%)' }} axisLine={true} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: 'hsl(160,10%,45%)' }} axisLine={true} tickLine={false} tickFormatter={(v) => `R$${v}`} />
-                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} formatter={(v: number) => [`R$ ${v}`, 'Gasto']} />
+                <YAxis tick={{ fontSize: 10, fill: 'hsl(160,10%,45%)' }} axisLine={true} tickLine={false} tickFormatter={(v) => `${currency}${v}`} />
+                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} formatter={(v: number) => [`${currency} ${v}`, 'Gasto']} />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(152, 60%, 42%)" />
               </BarChart>
             </ResponsiveContainer>
@@ -146,7 +148,7 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                     <Cell key={i} fill={entry.fill} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(v: number) => [`R$ ${v.toFixed(2)}`, '']} />
+                <Tooltip formatter={(v: number) => [`${currency} ${v.toFixed(2)}`, '']} />
               </PieChart>
             </ResponsiveContainer>
             <div className="mt-4 space-y-2">
@@ -158,7 +160,7 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-bold text-foreground">{c.percent}%</span>
-                    <span className="text-sm text-muted-foreground">R$ {c.value.toFixed(2)}</span>
+                    <span className="text-sm text-muted-foreground">{currency} {c.value.toFixed(2)}</span>
                   </div>
                 </div>
               ))}

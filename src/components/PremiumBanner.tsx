@@ -1,10 +1,12 @@
 import { Crown } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface PremiumBannerProps {
   onUpgrade: () => void;
 }
 
 export function PremiumBanner({ onUpgrade }: PremiumBannerProps) {
+  const { currency } = useLanguage();
   return (
     <button
       onClick={onUpgrade}
@@ -16,7 +18,7 @@ export function PremiumBanner({ onUpgrade }: PremiumBannerProps) {
       <div className="flex-1">
         <p className="text-sm font-bold text-primary-foreground">Premium</p>
         <p className="text-[11px] text-primary-foreground/80">
-          Acesso completo por R$ 49,90/ano
+          Acesso completo por {currency} 49,90/ano
         </p>
       </div>
       <span className="text-xs font-bold text-primary-foreground bg-primary-foreground/20 px-2 py-1 rounded-full">

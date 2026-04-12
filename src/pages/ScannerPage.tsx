@@ -5,6 +5,7 @@ import { Camera, Images, X, Loader2, Check, ArrowLeft, Package, MapPin, Trash2, 
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type ScanMode = 'choose' | 'single' | 'multi' | 'history';
 type ScanStep = 'capture' | 'processing' | 'results';
@@ -40,6 +41,7 @@ interface ScannerPageProps {
 }
 
 export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
+  const { currency } = useLanguage();
   const [mode, setMode] = useState<ScanMode>('choose');
   const [step, setStep] = useState<ScanStep>('capture');
   const [images, setImages] = useState<string[]>([]);
@@ -416,7 +418,7 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
                       {new Date(receipt.date + 'T12:00:00').toLocaleDateString('pt-BR')}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {receipt.items.length} {receipt.items.length === 1 ? 'item' : 'itens'} — R$ {receipt.total.toFixed(2)}
+                      {receipt.items.length} {receipt.items.length === 1 ? 'item' : 'itens'} — {currency} {receipt.total.toFixed(2)}
                     </p>
                   </div>
                 </div>
@@ -575,27 +577,27 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Soma dos itens (original):</span>
-                <span className="text-sm font-semibold text-foreground">R$ {result.items_sum.toFixed(2)}</span>
+                <span className="text-sm font-semibold text-foreground">{currency} {result.items_sum.toFixed(2)}</span>
               </div>
               {result.discount != null && result.discount > 0 && (
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">Desconto aplicado:</span>
-                  <span className="text-sm font-semibold text-green-600">- R$ {result.discount.toFixed(2)}</span>
+                  <span className="text-sm font-semibold text-green-600">- {currency} {result.discount.toFixed(2)}</span>
                 </div>
               )}
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Soma com desconto:</span>
-                <span className="text-sm font-bold text-primary">R$ {result.discounted_sum.toFixed(2)}</span>
+                <span className="text-sm font-bold text-primary">{currency} {result.discounted_sum.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between border-t border-border pt-1.5">
                 <span className="text-xs font-medium text-foreground">Total do cupom:</span>
-                <span className="text-sm font-bold text-primary">R$ {result.receipt_total.toFixed(2)}</span>
+                <span className="text-sm font-bold text-primary">{currency} {result.receipt_total.toFixed(2)}</span>
               </div>
               {hasDifference && (
                 <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2 mt-1">
                   <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <span className="text-xs text-amber-700 dark:text-amber-400">
-                    Diferença de R$ {result.difference.toFixed(2)} entre o total do cupom e a soma dos itens.
+                    Diferença de {currency} {result.difference.toFixed(2)} entre o total do cupom e a soma dos itens.
                     Algum item pode não ter sido identificado corretamente. Ajuste preços, quantidades, ou adicione/remova itens abaixo.
                   </span>
                 </div>
@@ -743,11 +745,11 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
                       <div className="flex justify-between items-center">
                         <div className="space-y-0.5">
                           <span className="text-xs text-muted-foreground">
-                            Original: R$ {item.total_price.toFixed(2)}
+                            Original: {currency} {item.total_price.toFixed(2)}
                           </span>
                           {item.discount_amount > 0 && (
                             <span className="text-xs text-green-600 block">
-                              Com desconto: R$ {item.discounted_price.toFixed(2)}
+                              Com desconto: {currency} {item.discounted_price.toFixed(2)}
                             </span>
                           )}
                         </div>
@@ -763,18 +765,18 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span className="bg-secondary px-1.5 py-0.5 rounded text-[10px] font-medium">{item.category}</span>
                           <span>{item.quantity} {item.unit}</span>
-                          <span>× R$ {item.unit_price.toFixed(2)}</span>
+                          <span>× {currency} {item.unit_price.toFixed(2)}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="text-right">
                           {item.discount_amount > 0 ? (
                             <>
-                              <span className="text-xs text-muted-foreground line-through block">R$ {item.total_price.toFixed(2)}</span>
-                              <span className="text-sm font-bold text-green-600">R$ {item.discounted_price.toFixed(2)}</span>
+                              <span className="text-xs text-muted-foreground line-through block">{currency} {item.total_price.toFixed(2)}</span>
+                              <span className="text-sm font-bold text-green-600">{currency} {item.discounted_price.toFixed(2)}</span>
                             </>
                           ) : (
-                            <span className="text-sm font-bold text-foreground">R$ {item.total_price.toFixed(2)}</span>
+                            <span className="text-sm font-bold text-foreground">{currency} {item.total_price.toFixed(2)}</span>
                           )}
                         </div>
                         <button onClick={() => setEditingItem(item.id)} className="text-muted-foreground hover:text-primary p-0.5">

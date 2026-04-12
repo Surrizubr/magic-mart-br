@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
-import { Camera, Images, X, Loader2, Check, ArrowLeft, Package, MapPin, Trash2, AlertTriangle, Edit2, Plus, History } from 'lucide-react';
+import { Camera, Images, X, Loader2, Check, ArrowLeft, Package, MapPin, Trash2, AlertTriangle, Edit2, Plus, History, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -35,9 +35,10 @@ interface AIReceiptResult {
 
 interface ScannerPageProps {
   onBack?: () => void;
+  onNavigateToHistory?: (date: string, store: string) => void;
 }
 
-export function ScannerPage({ onBack }: ScannerPageProps) {
+export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
   const [mode, setMode] = useState<ScanMode>('choose');
   const [step, setStep] = useState<ScanStep>('capture');
   const [images, setImages] = useState<string[]>([]);
@@ -47,6 +48,7 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [originalDiscounts, setOriginalDiscounts] = useState<Map<string, { discount_amount: number; discounted_price: number; discount: number }>>(new Map());
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
@@ -394,22 +396,74 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
                       {receipt.items.length} {receipt.items.length === 1 ? 'item' : 'itens'} — R$ {receipt.total.toFixed(2)}
                     </p>
                   </div>
+                </div>
+                <div className="flex items-center gap-3 mt-3">
                   <button
-                    onClick={() => {
-                      deleteReceipt(receipt.receipt_id);
-                      // Force re-render by toggling mode
-                      setMode('choose');
-                      setTimeout(() => setMode('history'), 0);
-                    }}
-                    className="p-2 rounded-full hover:bg-destructive/10 transition-colors"
+                    onClick={() => onNavigateToHistory?.(receipt.date, receipt.store_name)}
+                    className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
                   >
-                    <X className="w-5 h-5 text-destructive" />
+                    <Eye className="w-3.5 h-3.5" />
+                    Ver itens
+                  </button>
+                  <button
+                    onClick={() => setConfirmDeleteId(receipt.receipt_id)}
+                    className="flex items-center gap-1.5 text-xs font-medium text-destructive hover:underline"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    Excluir
                   </button>
                 </div>
               </motion.div>
             ))
           )}
         </div>
+
+        {/* Confirmation dialog */}
+        <AnimatePresence>
+          {confirmDeleteId && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+              onClick={() => setConfirmDeleteId(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={e => e.stopPropagation()}
+                className="bg-card rounded-xl shadow-elevated p-6 w-full max-w-sm space-y-4"
+              >
+                <p className="text-sm font-semibold text-card-foreground">Excluir cupom?</p>
+                <p className="text-xs text-muted-foreground">
+                  Todos os itens deste cupom serão removidos do histórico e do estoque. Esta ação não pode ser desfeita.
+                </p>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setConfirmDeleteId(null)}
+                  >
+                    Não
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={() => {
+                      deleteReceipt(confirmDeleteId);
+                      setConfirmDeleteId(null);
+                      setMode('choose');
+                      setTimeout(() => setMode('history'), 0);
+                    }}
+                  >
+                    Sim, excluir
+                  </Button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }

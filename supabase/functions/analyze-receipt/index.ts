@@ -5,23 +5,24 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function respond(ok: boolean, payload: Record<string, unknown>) {
+  return new Response(JSON.stringify({ ok, ...payload }), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { images, geminiApiKey } = await req.json();
     if (!images || !Array.isArray(images) || images.length === 0) {
-      return new Response(JSON.stringify({ error: "No images provided" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond(false, { error: "No images provided" });
     }
 
     if (!geminiApiKey) {
-      return new Response(JSON.stringify({ error: "Chave API Gemini não configurada. Vá em Configurações > Chave API Gemini para adicionar sua chave pessoal." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond(false, { error: "Chave API Gemini não configurada. Vá em Configurações > Chave API Gemini para adicionar sua chave pessoal." });
     }
 
     const imageContent = images.map((img: string) => ({
@@ -135,43 +136,32 @@ Você DEVE:
     if (!response.ok) {
       const errText = await response.text();
       console.error("AI API error:", response.status, errText);
+      if (response.status === 503) {
+        return respond(false, { error: "O modelo Gemini está com alta demanda no momento. Tente novamente em alguns instantes." });
+      }
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns instantes." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return respond(false, { error: "Limite de requisições excedido. Tente novamente em alguns instantes." });
       }
       if (response.status === 401 || response.status === 403) {
-        return new Response(JSON.stringify({ error: "Chave API Gemini inválida. Verifique nas configurações." }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return respond(false, { error: "Chave API Gemini inválida. Verifique nas configurações." });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes para análise de IA." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return respond(false, { error: "Créditos insuficientes para análise de IA." });
       }
-      return new Response(JSON.stringify({ error: "Erro na análise de IA" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond(false, { error: "Erro na análise de IA. Tente novamente." });
     }
 
     const data = await response.json();
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall) {
-      return new Response(JSON.stringify({ error: "IA não retornou dados estruturados" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond(false, { error: "IA não retornou dados estruturados. Tente novamente." });
     }
 
     const receiptData = JSON.parse(toolCall.function.arguments);
 
-    return new Response(JSON.stringify(receiptData), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return respond(true, { data: receiptData });
   } catch (e) {
     console.error("analyze-receipt error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return respond(false, { error: e instanceof Error ? e.message : "Erro desconhecido" });
   }
 });

@@ -78,6 +78,12 @@ const translations: Record<string, Record<Lang, string>> = {
   geminiPlaceholder: { pt: 'Cole sua chave API aqui', en: 'Paste your API key here', es: 'Pegue su clave API aquí' },
   geminiConfigured: { pt: 'Configurada', en: 'Configured', es: 'Configurada' },
   geminiNotConfigured: { pt: 'Não configurada', en: 'Not configured', es: 'No configurada' },
+  geminiHelpTitle: { pt: 'Como obter sua chave API Gemini', en: 'How to get your Gemini API Key', es: 'Cómo obtener tu clave API Gemini' },
+  geminiHelpSteps: {
+    pt: '1. Acesse aistudio.google.com\n2. Faça login com sua conta Google\n3. Clique em "Get API Key" no menu\n4. Clique em "Create API Key"\n5. Copie a chave gerada\n6. Cole aqui no app e salve',
+    en: '1. Go to aistudio.google.com\n2. Sign in with your Google account\n3. Click "Get API Key" in the menu\n4. Click "Create API Key"\n5. Copy the generated key\n6. Paste it here in the app and save',
+    es: '1. Accede a aistudio.google.com\n2. Inicia sesión con tu cuenta Google\n3. Haz clic en "Get API Key" en el menú\n4. Haz clic en "Create API Key"\n5. Copia la clave generada\n6. Pégala aquí en la app y guarda',
+  },
 };
 
 function formatNumber(value: number, curr: string): string {

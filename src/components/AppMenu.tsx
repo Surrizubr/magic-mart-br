@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Palette, Globe, Settings, Info, LogOut, RotateCcw, Trash2, Sun, Moon, Type, ChevronRight, ArrowLeft, Check, Key, ClipboardPaste, Save } from 'lucide-react';
+import { X, Palette, Globe, Settings, Info, LogOut, RotateCcw, Trash2, Sun, Moon, Type, ChevronRight, ArrowLeft, Check, Key, ClipboardPaste, Save, HelpCircle } from 'lucide-react';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { useTheme, ThemeMode } from '@/contexts/ThemeContext';
 import { useLanguage, Lang } from '@/contexts/LanguageContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
@@ -170,7 +171,20 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
         return (
           <div className="space-y-4">
             <div className="bg-card rounded-xl border border-border p-4">
-              <p className="text-xs text-muted-foreground mb-3">{t('geminiApiKeyDesc')}</p>
+              <div className="flex items-center gap-2 mb-3">
+                <p className="text-xs text-muted-foreground">{t('geminiApiKeyDesc')}</p>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="p-1 rounded-full hover:bg-accent transition-colors shrink-0">
+                      <HelpCircle className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 text-sm">
+                    <p className="font-semibold text-foreground mb-2">{t('geminiHelpTitle')}</p>
+                    <p className="text-xs text-muted-foreground whitespace-pre-line">{t('geminiHelpSteps')}</p>
+                  </PopoverContent>
+                </Popover>
+              </div>
               <input
                 type="password"
                 value={geminiKey}

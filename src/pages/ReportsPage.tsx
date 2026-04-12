@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
 import { getHistory } from '@/data/mockData';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
-import { TrendingUp, BarChart3, ShoppingCart, Clock, Calendar } from 'lucide-react';
+import { TrendingUp, BarChart3, ShoppingCart, Clock, Calendar, MapPin, ExternalLink } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const CATEGORY_COLORS = [
   'hsl(152, 60%, 42%)',
@@ -23,9 +25,10 @@ interface ReportsPageProps {
 }
 
 export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
-  const { currency, formatCurrency: fc } = useLanguage();
+  const { formatCurrency: fc } = useLanguage();
   const history = getHistory();
   const currentMonth = history.reduce((sum, h) => sum + h.total_price, 0);
+  const [visitsOpen, setVisitsOpen] = useState(false);
 
   const productCounts = history.reduce<Record<string, number>>((acc, h) => {
     acc[h.product_name] = (acc[h.product_name] || 0) + h.quantity;
@@ -33,11 +36,42 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
   }, {});
   const topProducts = Object.entries(productCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-  // Count unique visits (unique combination of store + date)
-  const uniqueVisits = new Set(history.map(h => `${h.store_name}|${h.purchase_date}`));
-  const totalVisits = uniqueVisits.size;
+  // Unique visits (store + date)
+  const visitEntries = Array.from(new Set(history.map(h => `${h.store_name}|${h.purchase_date}`)))
+    .map(key => {
+      const [store_name, purchase_date] = key.split('|');
+      const match = history.find(h => h.store_name === store_name && h.purchase_date === purchase_date);
+      return { store_name, purchase_date, store_lat: match?.store_lat, store_lng: match?.store_lng };
+    })
+    .sort((a, b) => new Date(b.purchase_date).getTime() - new Date(a.purchase_date).getTime());
+  const totalVisits = visitEntries.length;
 
-  // Category merge map — consolidate similar categories
+  // Most visited stores
+  const storeCounts = history.reduce<Record<string, { count: number; lat?: number; lng?: number }>>((acc, h) => {
+    const key = h.store_name;
+    if (!acc[key]) acc[key] = { count: 0, lat: h.store_lat, lng: h.store_lng };
+    // Count unique dates per store
+    return acc;
+  }, {});
+  // Recount using unique visits
+  visitEntries.forEach(v => {
+    if (!storeCounts[v.store_name]) storeCounts[v.store_name] = { count: 0, lat: v.store_lat, lng: v.store_lng };
+    storeCounts[v.store_name].count++;
+    if (v.store_lat) storeCounts[v.store_name].lat = v.store_lat;
+    if (v.store_lng) storeCounts[v.store_name].lng = v.store_lng;
+  });
+  const topStores = Object.entries(storeCounts)
+    .sort((a, b) => b[1].count - a[1].count);
+
+  const openMaps = (name: string, lat?: number, lng?: number) => {
+    if (lat && lng) {
+      window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank');
+    } else {
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}`, '_blank');
+    }
+  };
+
+  // Category merge map
   const categoryMerge: Record<string, string> = {
     'Frutas': 'Hortifruti',
     'Verduras': 'Hortifruti',
@@ -49,7 +83,6 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
     'Doces': 'Alimentos',
   };
 
-  // Derive category spending from history with merging
   const categoryTotals = history.reduce<Record<string, number>>((acc, h) => {
     const merged = categoryMerge[h.category] || h.category;
     acc[merged] = (acc[merged] || 0) + h.total_price;
@@ -58,8 +91,7 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
   const categoryData = Object.entries(categoryTotals)
     .sort((a, b) => b[1] - a[1])
     .map(([name, value], i) => ({
-      name,
-      value,
+      name, value,
       fill: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
     }));
   const catTotal = categoryData.reduce((s, c) => s + c.value, 0);
@@ -68,7 +100,6 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
     percent: catTotal > 0 ? ((c.value / catTotal) * 100).toFixed(1) : '0',
   }));
 
-  // Derive monthly spending from history
   const monthlyTotals = history.reduce<Record<string, number>>((acc, h) => {
     const d = new Date(h.purchase_date);
     const key = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
@@ -103,7 +134,7 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
             <p className="text-xl font-bold text-foreground">{fc(currentMonth)}</p>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Média/Mês</p>
           </div>
-          <button onClick={() => onNavigate?.('history')} className="bg-card rounded-xl border border-border p-4 text-left hover:bg-accent/50 transition-colors">
+          <button onClick={() => setVisitsOpen(true)} className="bg-card rounded-xl border border-border p-4 text-left hover:bg-accent/50 transition-colors">
             <ShoppingCart className="w-5 h-5 text-primary mb-2" />
             <p className="text-xl font-bold text-foreground">{totalVisits}</p>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Idas ao Mercado</p>
@@ -192,7 +223,65 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
             <p className="text-sm text-muted-foreground">Sem produtos no histórico.</p>
           </div>
         )}
+
+        {/* Most Visited Stores */}
+        {topStores.length > 0 && (
+          <div className="bg-card rounded-xl border border-border p-4">
+            <h3 className="text-sm font-bold text-foreground mb-3">Locais Mais Visitados</h3>
+            {topStores.map(([name, data], i) => (
+              <div key={name} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-bold text-primary bg-accent w-6 h-6 rounded flex items-center justify-center">{i + 1}</span>
+                  <div>
+                    <span className="text-sm font-medium text-foreground">{name}</span>
+                    <p className="text-[10px] text-muted-foreground">{data.count} {data.count === 1 ? 'visita' : 'visitas'}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => openMaps(name, data.lat, data.lng)}
+                  className="p-2 rounded-lg hover:bg-accent/50 transition-colors"
+                  title="Abrir no Google Maps"
+                >
+                  <ExternalLink className="w-4 h-4 text-primary" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </motion.div>
+
+      {/* Visits Dialog */}
+      <Dialog open={visitsOpen} onOpenChange={setVisitsOpen}>
+        <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5 text-primary" />
+              Idas ao Mercado ({totalVisits})
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-1">
+            {visitEntries.map((v, i) => (
+              <div key={i} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
+                <div>
+                  <p className="text-sm font-medium text-foreground">{v.store_name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(v.purchase_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </p>
+                </div>
+                <button
+                  onClick={() => openMaps(v.store_name, v.store_lat, v.store_lng)}
+                  className="p-2 rounded-lg hover:bg-accent/50 transition-colors"
+                >
+                  <MapPin className="w-4 h-4 text-primary" />
+                </button>
+              </div>
+            ))}
+            {visitEntries.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhuma visita registrada.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

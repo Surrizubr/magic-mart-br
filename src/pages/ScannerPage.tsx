@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
-import { Camera, Images, X, Loader2, Check, ArrowLeft, Package, MapPin, Trash2, AlertTriangle, Edit2, Plus, History, Eye } from 'lucide-react';
+import { Camera, Images, X, Loader2, Check, ArrowLeft, Package, MapPin, Trash2, AlertTriangle, Edit2, Plus, History, Eye, HelpCircle } from 'lucide-react';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,7 +43,7 @@ interface ScannerPageProps {
 }
 
 export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
-  const { currency, formatCurrency: fc } = useLanguage();
+  const { currency, formatCurrency: fc, t } = useLanguage();
   const [mode, setMode] = useState<ScanMode>('choose');
   const [step, setStep] = useState<ScanStep>('capture');
   const [images, setImages] = useState<string[]>([]);
@@ -327,9 +328,22 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
           <p className="text-sm text-muted-foreground text-center">
             Escaneie seus cupons fiscais para adicionar produtos automaticamente ao estoque e histórico.
           </p>
-          <p className="text-xs text-center text-primary font-medium">
-            🤖 Análise inteligente com IA — reconhecimento avançado
-          </p>
+          <div className="flex items-center justify-center gap-2">
+            <p className="text-xs text-center text-primary font-medium">
+              🤖 Análise inteligente com IA — reconhecimento avançado
+            </p>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="p-1 rounded-full hover:bg-accent transition-colors">
+                  <HelpCircle className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 text-sm">
+                <p className="font-semibold text-foreground mb-2">{t('geminiHelpTitle')}</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-line">{t('geminiHelpSteps')}</p>
+              </PopoverContent>
+            </Popover>
+          </div>
 
           <motion.button
             initial={{ opacity: 0, y: 10 }}

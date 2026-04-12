@@ -68,6 +68,16 @@ const translations: Record<string, Record<Lang, string>> = {
   clear: { pt: 'Limpar', en: 'Clear', es: 'Limpiar' },
   seeAll: { pt: 'Ver todas', en: 'See all', es: 'Ver todas' },
   menu: { pt: 'Menu', en: 'Menu', es: 'Menú' },
+  geminiApiKey: { pt: 'Chave API Gemini', en: 'Gemini API Key', es: 'Clave API Gemini' },
+  geminiApiKeyDesc: { pt: 'Chave pessoal para funções de IA', en: 'Personal key for AI features', es: 'Clave personal para funciones de IA' },
+  geminiApiKeySaved: { pt: 'Chave salva com sucesso!', en: 'Key saved successfully!', es: '¡Clave guardada!' },
+  geminiApiKeyDeleted: { pt: 'Chave removida.', en: 'Key removed.', es: 'Clave eliminada.' },
+  geminiPaste: { pt: 'Colar', en: 'Paste', es: 'Pegar' },
+  geminiDelete: { pt: 'Apagar', en: 'Delete', es: 'Borrar' },
+  geminiSave: { pt: 'Salvar', en: 'Save', es: 'Guardar' },
+  geminiPlaceholder: { pt: 'Cole sua chave API aqui', en: 'Paste your API key here', es: 'Pegue su clave API aquí' },
+  geminiConfigured: { pt: 'Configurada', en: 'Configured', es: 'Configurada' },
+  geminiNotConfigured: { pt: 'Não configurada', en: 'Not configured', es: 'No configurada' },
 };
 
 function formatNumber(value: number, curr: string): string {

@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { images } = await req.json();
+    const { images, geminiApiKey } = await req.json();
     if (!images || !Array.isArray(images) || images.length === 0) {
       return new Response(JSON.stringify({ error: "No images provided" }), {
         status: 400,
@@ -17,8 +17,16 @@ serve(async (req) => {
       });
     }
 
+    // Determine which API to use
+    const useGeminiDirect = !!geminiApiKey;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    if (!useGeminiDirect && !LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: "Nenhuma chave API configurada. Configure sua chave Gemini nas configurações." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const imageContent = images.map((img: string) => ({
       type: "image_url" as const,
@@ -57,14 +65,77 @@ Você DEVE:
 3. Usar a ordem sequencial das imagens para montar a lista completa de itens na ordem correta do cupom.
 4. Se não encontrar sobreposição clara entre duas fotos consecutivas, inclua todos os itens de ambas mas adicione uma nota no campo "notes" indicando que a sobreposição não foi identificada e pode haver duplicatas.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
+    const tools = [
+      {
+        type: "function",
+        function: {
+          name: "extract_receipt_data",
+          description: "Extrair dados estruturados de um cupom fiscal brasileiro",
+          parameters: {
+            type: "object",
+            properties: {
+              store_name: { type: "string", description: "Nome do estabelecimento" },
+              store_address: { type: "string", description: "Endereço do estabelecimento, se visível" },
+              date: { type: "string", description: "Data da compra no formato YYYY-MM-DD" },
+              items: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    product_name: { type: "string" },
+                    quantity: { type: "number" },
+                    unit: { type: "string", enum: ["un", "kg", "lt", "l", "ml", "g", "pc", "pct", "cx", "dz", "mt", "m"] },
+                    unit_price: { type: "number" },
+                    total_price: { type: "number", description: "Preço total original (antes do desconto)" },
+                    discount_amount: { type: "number", description: "Valor de desconto aplicado neste item (0 se não houver)" },
+                    discounted_price: { type: "number", description: "Preço final após desconto (total_price - discount_amount)" },
+                    category: {
+                      type: "string",
+                      enum: ["Grãos", "Laticínios", "Carnes", "Frutas", "Verduras", "Bebidas", "Padaria", "Limpeza", "Higiene", "Temperos", "Frios", "Congelados", "Alimentos", "Transporte", "Outros"],
+                    },
+                  },
+                  required: ["product_name", "quantity", "unit", "unit_price", "total_price", "discount_amount", "discounted_price", "category"],
+                },
+              },
+              receipt_total: { type: "number", description: "Valor total impresso no cupom" },
+              items_sum: { type: "number", description: "Soma calculada de todos os itens" },
+              discount: { type: "number", description: "Desconto aplicado, se houver" },
+              difference: { type: "number", description: "Diferença entre total do cupom e soma dos itens (0 se iguais)" },
+              notes: { type: "string", description: "Observações sobre discrepâncias ou itens difíceis de ler" },
+            },
+            required: ["store_name", "date", "items", "receipt_total", "items_sum", "difference"],
+          },
+        },
+      },
+    ];
+
+    let apiUrl: string;
+    let headers: Record<string, string>;
+    let model: string;
+
+    if (useGeminiDirect) {
+      // Use Google Gemini API directly with user's personal key
+      apiUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+      headers = {
+        Authorization: `Bearer ${geminiApiKey}`,
+        "Content-Type": "application/json",
+      };
+      model = "gemini-2.5-flash";
+    } else {
+      // Fallback to Lovable AI Gateway
+      apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
+      headers = {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
-      },
+      };
+      model = "google/gemini-2.5-flash";
+    }
+
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers,
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model,
         messages: [
           { role: "system", content: systemPrompt },
           {
@@ -75,59 +146,22 @@ Você DEVE:
             ],
           },
         ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "extract_receipt_data",
-              description: "Extrair dados estruturados de um cupom fiscal brasileiro",
-              parameters: {
-                type: "object",
-                properties: {
-                  store_name: { type: "string", description: "Nome do estabelecimento" },
-                  store_address: { type: "string", description: "Endereço do estabelecimento, se visível" },
-                  date: { type: "string", description: "Data da compra no formato YYYY-MM-DD" },
-                  items: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        product_name: { type: "string" },
-                        quantity: { type: "number" },
-                        unit: { type: "string", enum: ["un", "kg", "lt", "l", "ml", "g", "pc", "pct", "cx", "dz", "mt", "m"] },
-                        unit_price: { type: "number" },
-                        total_price: { type: "number", description: "Preço total original (antes do desconto)" },
-                        discount_amount: { type: "number", description: "Valor de desconto aplicado neste item (0 se não houver)" },
-                        discounted_price: { type: "number", description: "Preço final após desconto (total_price - discount_amount)" },
-                        category: {
-                          type: "string",
-                          enum: ["Grãos", "Laticínios", "Carnes", "Frutas", "Verduras", "Bebidas", "Padaria", "Limpeza", "Higiene", "Temperos", "Frios", "Congelados", "Alimentos", "Transporte", "Outros"],
-                        },
-                      },
-                      required: ["product_name", "quantity", "unit", "unit_price", "total_price", "discount_amount", "discounted_price", "category"],
-                    },
-                  },
-                  receipt_total: { type: "number", description: "Valor total impresso no cupom" },
-                  items_sum: { type: "number", description: "Soma calculada de todos os itens" },
-                  discount: { type: "number", description: "Desconto aplicado, se houver" },
-                  difference: { type: "number", description: "Diferença entre total do cupom e soma dos itens (0 se iguais)" },
-                  notes: { type: "string", description: "Observações sobre discrepâncias ou itens difíceis de ler" },
-                },
-                required: ["store_name", "date", "items", "receipt_total", "items_sum", "difference"],
-              },
-            },
-          },
-        ],
+        tools,
         tool_choice: { type: "function", function: { name: "extract_receipt_data" } },
       }),
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("AI gateway error:", response.status, errText);
+      console.error("AI API error:", response.status, errText);
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns instantes." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response.status === 401 || response.status === 403) {
+        return new Response(JSON.stringify({ error: "Chave API Gemini inválida. Verifique nas configurações." }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {

@@ -102,8 +102,9 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
       setProgressPercent(25);
       setProgressMsg('Imagens enviadas. Aguardando processamento da IA...');
 
+      const geminiApiKey = localStorage.getItem('gemini-api-key') || '';
       const { data, error: fnError } = await supabase.functions.invoke('analyze-receipt', {
-        body: { images: imgs },
+        body: { images: imgs, geminiApiKey },
       });
 
       setProgressPercent(70);

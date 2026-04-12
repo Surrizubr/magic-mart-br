@@ -930,11 +930,19 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
             </div>
           </button>
 
-          {mode === 'multi' && images.length > 0 && (
-            <div className="bg-accent/50 rounded-lg p-3">
-              <p className="text-xs text-accent-foreground text-center">
-                💡 Tire fotos de todas as partes do cupom. A IA vai unir e consolidar automaticamente.
+          {mode === 'multi' && (
+            <div className="bg-accent/50 rounded-lg p-3 space-y-1.5">
+              <p className="text-xs font-semibold text-accent-foreground">
+                📸 Dica para cupons longos:
               </p>
+              <p className="text-xs text-accent-foreground/80">
+                Ao fotografar, garanta que o <span className="font-bold">último item visível</span> de uma foto apareça também no <span className="font-bold">início da próxima foto</span>. Essa sobreposição permite que a IA identifique a junção e evite duplicar itens.
+              </p>
+              {images.length > 1 && (
+                <p className="text-[10px] text-primary font-medium mt-1">
+                  ✅ {images.length} fotos adicionadas — a IA vai identificar as sobreposições automaticamente.
+                </p>
+              )}
             </div>
           )}
         </div>

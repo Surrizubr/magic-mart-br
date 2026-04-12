@@ -84,6 +84,16 @@ const translations: Record<string, Record<Lang, string>> = {
     en: '1. Go to aistudio.google.com\n2. Sign in with your Google account\n3. Click "Get API Key" in the menu\n4. Click "Create API Key"\n5. Copy the generated key\n6. Paste it here in the app and save',
     es: '1. Accede a aistudio.google.com\n2. Inicia sesión con tu cuenta Google\n3. Haz clic en "Get API Key" en el menú\n4. Haz clic en "Create API Key"\n5. Copia la clave generada\n6. Pégala aquí en la app y guarda',
   },
+  scannerApiKeyInfo: {
+    pt: 'Para escanear cupons, configure sua chave API Gemini no menu de configurações.',
+    en: 'To scan receipts, set up your Gemini API key in the settings menu.',
+    es: 'Para escanear recibos, configura tu clave API Gemini en el menú de ajustes.',
+  },
+  scannerGoToSettings: {
+    pt: 'Abrir Configurações',
+    en: 'Open Settings',
+    es: 'Abrir Ajustes',
+  },
 };
 
 function formatNumber(value: number, curr: string): string {

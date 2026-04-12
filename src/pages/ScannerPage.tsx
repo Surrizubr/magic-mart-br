@@ -1,8 +1,7 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
-import { Camera, Images, X, Loader2, Check, ArrowLeft, Package, MapPin, Trash2, AlertTriangle, Edit2, Plus, History, Eye, HelpCircle } from 'lucide-react';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Camera, Images, X, Loader2, Check, ArrowLeft, Package, MapPin, Trash2, AlertTriangle, Edit2, Plus, History, Eye, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,9 +39,10 @@ interface AIReceiptResult {
 interface ScannerPageProps {
   onBack?: () => void;
   onNavigateToHistory?: (date: string, store: string) => void;
+  onOpenMenu?: () => void;
 }
 
-export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
+export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: ScannerPageProps) {
   const { currency, formatCurrency: fc, t } = useLanguage();
   const [mode, setMode] = useState<ScanMode>('choose');
   const [step, setStep] = useState<ScanStep>('capture');
@@ -325,24 +325,19 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
       <div className="pb-20">
         <PageHeader title="Scanner" subtitle="Digitalize cupons fiscais" onBack={onBack} />
         <div className="p-4 space-y-4">
-          <p className="text-sm text-muted-foreground text-center">
-            Escaneie seus cupons fiscais para adicionar produtos automaticamente ao estoque e histórico.
-          </p>
-          <div className="flex items-center justify-center gap-2">
-            <p className="text-xs text-center text-primary font-medium">
-              🤖 Análise inteligente com IA — reconhecimento avançado
-            </p>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="p-1 rounded-full hover:bg-accent transition-colors">
-                  <HelpCircle className="w-4 h-4 text-muted-foreground" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-72 text-sm">
-                <p className="font-semibold text-foreground mb-2">{t('geminiHelpTitle')}</p>
-                <p className="text-xs text-muted-foreground whitespace-pre-line">{t('geminiHelpSteps')}</p>
-              </PopoverContent>
-            </Popover>
+          <div className="bg-accent/50 rounded-lg p-3 flex items-start gap-3">
+            <Settings className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-foreground font-medium">
+                {t('scannerApiKeyInfo')}
+              </p>
+              <button
+                onClick={onOpenMenu}
+                className="text-sm text-primary font-semibold mt-1 underline underline-offset-2 hover:opacity-80 transition-opacity"
+              >
+                {t('scannerGoToSettings')}
+              </button>
+            </div>
           </div>
 
           <motion.button

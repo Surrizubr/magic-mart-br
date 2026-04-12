@@ -334,6 +334,81 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
               </p>
             </div>
           </motion.button>
+
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            onClick={() => setMode('history')}
+            className="w-full bg-card rounded-lg shadow-card p-5 flex items-center gap-4 text-left hover:shadow-elevated transition-shadow"
+          >
+            <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center shrink-0">
+              <History className="w-6 h-6 text-secondary-foreground" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-card-foreground">Histórico de Cupons</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Veja todos os cupons escaneados e gerencie seus registros
+              </p>
+            </div>
+          </motion.button>
+        </div>
+      </div>
+    );
+  }
+
+  // Receipt history screen
+  if (mode === 'history') {
+    return (
+      <div className="pb-20">
+        <PageHeader
+          title="Histórico de Cupons"
+          subtitle={`${scannedReceipts.length} cupons escaneados`}
+          action={
+            <button onClick={reset} className="text-sm text-primary font-medium flex items-center gap-1">
+              <ArrowLeft className="w-4 h-4" /> Voltar
+            </button>
+          }
+        />
+        <div className="p-4 space-y-3">
+          {scannedReceipts.length === 0 ? (
+            <div className="text-center py-12 space-y-3">
+              <History className="w-12 h-12 text-muted-foreground mx-auto" />
+              <p className="text-sm text-muted-foreground">Nenhum cupom escaneado ainda.</p>
+            </div>
+          ) : (
+            scannedReceipts.map((receipt) => (
+              <motion.div
+                key={receipt.receipt_id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-card rounded-lg shadow-card p-4"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-card-foreground truncate">{receipt.store_name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {new Date(receipt.date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {receipt.items.length} {receipt.items.length === 1 ? 'item' : 'itens'} — R$ {receipt.total.toFixed(2)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      deleteReceipt(receipt.receipt_id);
+                      // Force re-render by toggling mode
+                      setMode('choose');
+                      setTimeout(() => setMode('history'), 0);
+                    }}
+                    className="p-2 rounded-full hover:bg-destructive/10 transition-colors"
+                  >
+                    <X className="w-5 h-5 text-destructive" />
+                  </button>
+                </div>
+              </motion.div>
+            ))
+          )}
         </div>
       </div>
     );

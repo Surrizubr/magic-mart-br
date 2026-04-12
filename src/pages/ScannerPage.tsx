@@ -539,6 +539,14 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
             })}
           </div>
 
+          {/* Add item button */}
+          {!saved && (
+            <Button variant="outline" onClick={addItem} className="w-full h-10">
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Item
+            </Button>
+          )}
+
           {result.items.length === 0 && (
             <div className="text-center py-8">
               <p className="text-sm text-muted-foreground">Nenhum item encontrado no cupom.</p>

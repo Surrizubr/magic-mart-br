@@ -127,7 +127,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
       setProgressMsg('Organizando produtos e calculando totais...');
 
       // Add IDs to items
-      const items: ReceiptItem[] = (data.items || []).map((item: any, i: number) => ({
+      const items: ReceiptItem[] = (result.items || []).map((item: any, i: number) => ({
         ...item,
         id: `ai-${i + 1}`,
         discount_amount: item.discount_amount || 0,

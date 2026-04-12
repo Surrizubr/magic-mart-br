@@ -27,7 +27,7 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
   const lists = getLists();
   const history = getHistory();
   const criticalStock = stock.filter(s => s.status === 'critical' || s.status === 'low');
-  const activeLists = lists.filter(l => l.status === 'active');
+  const activeLists = lists.filter(l => l.status === 'active' || l.status === 'shopping');
   const totalMonth = history.reduce((sum, h) => sum + h.total_price, 0);
   const today = new Date();
   const dateStr = today.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });

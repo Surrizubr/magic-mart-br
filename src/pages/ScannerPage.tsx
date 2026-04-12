@@ -35,9 +35,10 @@ interface AIReceiptResult {
 
 interface ScannerPageProps {
   onBack?: () => void;
+  onNavigateToHistory?: (date: string, store: string) => void;
 }
 
-export function ScannerPage({ onBack }: ScannerPageProps) {
+export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
   const [mode, setMode] = useState<ScanMode>('choose');
   const [step, setStep] = useState<ScanStep>('capture');
   const [images, setImages] = useState<string[]>([]);

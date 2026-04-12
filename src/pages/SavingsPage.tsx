@@ -35,6 +35,7 @@ interface SavingsPageProps {
 }
 
 export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
+  const { currency } = useLanguage();
   const allHistory = getHistory();
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedWeekDay, setSelectedWeekDay] = useState<number | null>(null);
@@ -169,7 +170,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
             <div>
               <p className="text-xs font-bold text-primary uppercase tracking-wider">Economia Potencial</p>
               <div className="flex items-center gap-2">
-                <span className="text-xl font-bold text-foreground">R$</span>
+                <span className="text-xl font-bold text-foreground">{currency}</span>
                 <span className="text-sm text-muted-foreground">Necessário mais dados históricos</span>
               </div>
             </div>
@@ -300,7 +301,7 @@ export function SavingsPage({ onBack, onNavigateToHistory }: SavingsPageProps) {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground truncate">{store}</p>
                         <p className="text-xs text-muted-foreground">
-                          {info.count} {info.count === 1 ? 'item' : 'itens'} · R$ {info.total.toFixed(2)}
+                          {info.count} {info.count === 1 ? 'item' : 'itens'} · {currency} {info.total.toFixed(2)}
                         </p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />

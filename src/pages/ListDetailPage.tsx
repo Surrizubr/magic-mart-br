@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ShoppingList, ShoppingListItem } from '@/types';
 import { ArrowLeft, Plus, ShoppingCart, CheckCircle, Trash2, MapPin, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ListDetailPageProps {
   list: ShoppingList;
@@ -15,6 +16,7 @@ interface ListDetailPageProps {
 }
 
 export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }: ListDetailPageProps) {
+  const { currency } = useLanguage();
   const [items, setItems] = useState<ShoppingListItem[]>(list.items);
   const [showAddItem, setShowAddItem] = useState(false);
   const [newProduct, setNewProduct] = useState('');

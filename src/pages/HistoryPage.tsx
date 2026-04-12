@@ -35,6 +35,7 @@ interface HistoryPageProps {
 }
 
 export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterStore }: HistoryPageProps) {
+  const { currency } = useLanguage();
   const allHistory = getHistory();
   const history = filterDate
     ? allHistory.filter(h => h.purchase_date === filterDate && (!filterStore || h.store_name === filterStore))
@@ -127,7 +128,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
             <p className="text-xs font-semibold text-primary">Total do mês</p>
             <p className="text-xs text-muted-foreground">Abril De 2026</p>
           </div>
-          <p className="text-2xl font-bold text-primary">R$ {totalMonth.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-primary">{currency} {totalMonth.toFixed(2)}</p>
         </div>
 
         {/* Grouped by date */}
@@ -144,7 +145,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                 <p className="text-sm font-bold text-foreground">
                   {new Date(date + 'T12:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}
                 </p>
-                <p className="text-sm text-muted-foreground">R$ {dayTotal.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">{currency} {dayTotal.toFixed(2)}</p>
               </div>
 
               {Object.entries(byStore).map(([store, storeItems]) => {
@@ -163,7 +164,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                           Editar <Pencil className="w-2.5 h-2.5" />
                         </button>
                       </div>
-                      <span className="text-xs font-medium text-muted-foreground">R$ {storeTotal.toFixed(2)}</span>
+                      <span className="text-xs font-medium text-muted-foreground">{currency} {storeTotal.toFixed(2)}</span>
                     </div>
 
                     {/* Scan banner - only show if none of the items in this store group were scanned */}
@@ -196,7 +197,7 @@ export function HistoryPage({ onNavigateToScanner, onBack, filterDate, filterSto
                                 <span className="text-xs text-muted-foreground">{item.quantity} un</span>
                               </div>
                             </div>
-                            <p className="text-sm font-bold text-foreground">R$ {item.total_price.toFixed(2)}</p>
+                            <p className="text-sm font-bold text-foreground">{currency} {item.total_price.toFixed(2)}</p>
                           </div>
                         );
                       })}

@@ -345,7 +345,13 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            onClick={() => setMode('single')}
+            onClick={() => {
+              if (!localStorage.getItem('gemini-api-key')) {
+                toast.error(t('scannerApiKeyInfo'));
+                return;
+              }
+              setMode('single');
+            }}
             className="w-full bg-card rounded-lg shadow-card p-5 flex items-center gap-4 text-left hover:shadow-elevated transition-shadow"
           >
             <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center shrink-0">

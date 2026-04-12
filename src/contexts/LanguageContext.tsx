@@ -1,6 +1,12 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export type Lang = 'pt' | 'en' | 'es';
+
+const currencyByLang: Record<Lang, string> = {
+  pt: 'R$',
+  en: 'US$',
+  es: '$',
+};
 
 const translations: Record<string, Record<Lang, string>> = {
   hello: { pt: 'Olá', en: 'Hello', es: 'Hola' },

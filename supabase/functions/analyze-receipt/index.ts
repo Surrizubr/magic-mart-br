@@ -17,12 +17,8 @@ serve(async (req) => {
       });
     }
 
-    // Determine which API to use
-    const useGeminiDirect = !!geminiApiKey;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-
-    if (!useGeminiDirect && !LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "Nenhuma chave API configurada. Configure sua chave Gemini nas configurações." }), {
+    if (!geminiApiKey) {
+      return new Response(JSON.stringify({ error: "Chave API Gemini não configurada. Vá em Configurações > Chave API Gemini para adicionar sua chave pessoal." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

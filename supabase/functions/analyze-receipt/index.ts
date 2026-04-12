@@ -105,27 +105,12 @@ Você DEVE:
       },
     ];
 
-    let apiUrl: string;
-    let headers: Record<string, string>;
-    let model: string;
-
-    if (useGeminiDirect) {
-      // Use Google Gemini API directly with user's personal key
-      apiUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-      headers = {
-        Authorization: `Bearer ${geminiApiKey}`,
-        "Content-Type": "application/json",
-      };
-      model = "gemini-2.5-flash";
-    } else {
-      // Fallback to Lovable AI Gateway
-      apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
-      headers = {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      };
-      model = "google/gemini-2.5-flash";
-    }
+    const apiUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+    const apiHeaders: Record<string, string> = {
+      Authorization: `Bearer ${geminiApiKey}`,
+      "Content-Type": "application/json",
+    };
+    const model = "gemini-2.5-flash";
 
     const response = await fetch(apiUrl, {
       method: "POST",

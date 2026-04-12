@@ -329,20 +329,25 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
       <div className="pb-20">
         <PageHeader title="Scanner" subtitle="Digitalize cupons fiscais" onBack={onBack} />
         <div className="p-4 space-y-4">
-          <div className="bg-accent/50 rounded-lg p-3 flex items-start gap-3">
-            <Settings className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm text-foreground font-medium">
-                {t('scannerApiKeyInfo')}
-              </p>
-              <button
-                onClick={onOpenMenu}
-                className="text-sm text-primary font-semibold mt-1 underline underline-offset-2 hover:opacity-80 transition-opacity"
-              >
-                {t('scannerGoToSettings')}
-              </button>
-            </div>
-          </div>
+          {(() => {
+            const hasKey = !!localStorage.getItem('gemini-api-key');
+            return (
+              <div className={`rounded-lg p-3 flex items-start gap-3 ${hasKey ? 'bg-primary/10' : 'bg-accent/50'}`}>
+                {hasKey ? <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" /> : <Settings className="w-5 h-5 text-primary shrink-0 mt-0.5" />}
+                <div className="flex-1">
+                  <p className="text-sm text-foreground font-medium">
+                    {hasKey ? t('scannerApiKeyConfigured') : t('scannerApiKeyInfo')}
+                  </p>
+                  <button
+                    onClick={onOpenMenu}
+                    className="text-sm text-primary font-semibold mt-1 underline underline-offset-2 hover:opacity-80 transition-opacity"
+                  >
+                    {t('scannerGoToSettings')}
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
 
           <motion.button
             initial={{ opacity: 0, y: 10 }}

@@ -89,6 +89,11 @@ const translations: Record<string, Record<Lang, string>> = {
     en: 'To scan receipts, set up your Gemini API key in the settings menu.',
     es: 'Para escanear recibos, configura tu clave API Gemini en el menú de ajustes.',
   },
+  scannerApiKeyConfigured: {
+    pt: 'Chave API Gemini configurada. Para trocar a chave, acesse o menu de configurações.',
+    en: 'Gemini API key configured. To change it, go to the settings menu.',
+    es: 'Clave API Gemini configurada. Para cambiarla, accede al menú de ajustes.',
+  },
   scannerGoToSettings: {
     pt: 'Abrir Configurações',
     en: 'Open Settings',

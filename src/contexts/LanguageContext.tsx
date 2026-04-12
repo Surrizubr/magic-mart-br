@@ -148,8 +148,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   // Currency: pt/es in Europe → €, otherwise default by lang
   const currency = (lang === 'pt' || lang === 'es') && isEurope ? '€' : currencyByLang[lang];
 
+  const fc = (value: number) => `${currency} ${formatNumber(value, currency)}`;
+
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t, currency }}>
+    <LanguageContext.Provider value={{ lang, setLang, t, currency, formatCurrency: fc }}>
       {children}
     </LanguageContext.Provider>
   );

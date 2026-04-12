@@ -8,7 +8,9 @@ import { recalculateAllConsumptionRates } from '@/lib/consumptionCalculator';
 import { SwipeableRow } from '@/components/SwipeableRow';
 import { addToReminderList } from '@/lib/reminderList';
 import { toast } from 'sonner';
-import { AddStockItemDialog } from '@/components/AddStockItemDialog';
+import { AddStockItemDialog, AddStockItemResult } from '@/components/AddStockItemDialog';
+import { getHistory } from '@/data/mockData';
+import { PurchaseHistory } from '@/types';
 
 type StatusFilter = 'all' | 'critical' | 'low' | 'ok';
 
@@ -41,8 +43,26 @@ export function StockPage({ onBack }: StockPageProps) {
   const [editingQtyValue, setEditingQtyValue] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
 
-  const handleAddItem = (item: StockItem) => {
-    setStock(prev => [item, ...prev]);
+  const handleAddItem = (item: AddStockItemResult) => {
+    const { price, ...stockItem } = item;
+    setStock(prev => [stockItem, ...prev]);
+
+    // Add to purchase history
+    const qty = stockItem.quantity || 1;
+    const historyEntry: PurchaseHistory = {
+      id: crypto.randomUUID(),
+      product_name: stockItem.product_name,
+      category: stockItem.category,
+      quantity: qty,
+      price: price,
+      total_price: price * qty,
+      store_name: 'Entrada Manual',
+      purchase_date: new Date().toISOString().split('T')[0],
+    };
+    const history = getHistory();
+    history.unshift(historyEntry);
+    localStorage.setItem('purchase_history', JSON.stringify(history));
+
     toast.success('Produto adicionado ao estoque!');
   };
 

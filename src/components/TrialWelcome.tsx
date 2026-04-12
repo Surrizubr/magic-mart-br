@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Leaf, ShoppingCart, BarChart3, Camera, Users, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TrialWelcomeProps {
   onStartTrial: () => void;

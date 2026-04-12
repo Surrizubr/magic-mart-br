@@ -12,27 +12,27 @@ interface SharePageProps {
   onBack?: () => void;
 }
 
-function formatListForWhatsApp(list: ShoppingList, currency: string): string {
+function formatListForWhatsApp(list: ShoppingList, currency: string, fc: (v: number) => string): string {
   let text = `🛒 *${list.name}*\n\n`;
   if (list.items.length === 0) {
     text += '(lista vazia)\n';
   } else {
     list.items.forEach((item, i) => {
       const checked = item.is_checked ? '✅' : '⬜';
-      const price = item.estimated_price > 0 ? ` - ${currency} ${item.estimated_price.toFixed(2)}` : '';
+      const price = item.estimated_price > 0 ? ` - ${fc(item.estimated_price)}` : '';
       text += `${checked} ${item.quantity} ${item.unit} ${item.product_name}${price}\n`;
     });
   }
   const total = list.items.reduce((s, it) => s + it.estimated_price * it.quantity, 0);
   if (total > 0) {
-    text += `\n💰 *Total estimado: ${currency} ${total.toFixed(2)}*`;
+    text += `\n💰 *Total estimado: ${fc(total)}*`;
   }
   text += '\n\n_Enviado via Magicmart AI 🌿_';
   return text;
 }
 
 export function SharePage({ onBack }: SharePageProps) {
-  const { currency } = useLanguage();
+  const { currency, formatCurrency: fc } = useLanguage();
   const lists = getLists().filter(l => l.status === 'active' || l.status === 'shopping');
   const [selected, setSelected] = useState<string[]>([]);
 
@@ -46,7 +46,7 @@ export function SharePage({ onBack }: SharePageProps) {
       toast.error('Selecione pelo menos uma lista');
       return;
     }
-    const text = listsToShare.map(l => formatListForWhatsApp(l, currency)).join('\n\n---\n\n');
+    const text = listsToShare.map(l => formatListForWhatsApp(l, currency, fc)).join('\n\n---\n\n');
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
@@ -88,7 +88,7 @@ export function SharePage({ onBack }: SharePageProps) {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-bold text-foreground">{l.name}</p>
-                      <p className="text-xs text-muted-foreground">{l.items.length} itens · {currency} {l.estimated_total.toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground">{l.items.length} itens · {fc(l.estimated_total)}</p>
                     </div>
                   </button>
                 );

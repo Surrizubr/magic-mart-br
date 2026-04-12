@@ -16,7 +16,7 @@ interface ListDetailPageProps {
 }
 
 export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }: ListDetailPageProps) {
-  const { currency } = useLanguage();
+  const { currency, formatCurrency: fc } = useLanguage();
   const [items, setItems] = useState<ShoppingListItem[]>(list.items);
   const [showAddItem, setShowAddItem] = useState(false);
   const [newProduct, setNewProduct] = useState('');
@@ -271,7 +271,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {item.quantity} {item.unit}
-                    {item.estimated_price > 0 && ` · ${currency} ${item.estimated_price.toFixed(2)}`}
+                    {item.estimated_price > 0 && ` · ${fc(item.estimated_price)}`}
                   </p>
                 </div>
                 <span className="text-xs text-muted-foreground mr-1">{item.category}</span>

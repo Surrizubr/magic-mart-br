@@ -426,18 +426,32 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
                 Salvar no Estoque e Histórico
               </Button>
               {/* Discount toggle buttons */}
-              {result.discount != null && result.discount > 0 && (
+              {originalDiscounts.size > 0 && (
                 <div className="flex gap-2">
                   <Button
                     variant={result.items.some(i => i.discount_amount > 0) ? "default" : "outline"}
                     onClick={() => {
-                      // Restore original discounts from AI
-                      // Already applied - no action needed if already on
+                      const newItems = result.items.map(item => {
+                        const orig = originalDiscounts.get(item.id);
+                        if (orig) {
+                          return { ...item, discount_amount: orig.discount_amount, discounted_price: orig.discounted_price };
+                        }
+                        return item;
+                      });
+                      const origDiscount = Array.from(originalDiscounts.values())[0]?.discount || 0;
+                      const newDiscountedSum = newItems.reduce((s, i) => s + i.discounted_price, 0);
+                      setResult({
+                        ...result,
+                        items: newItems,
+                        discount: origDiscount,
+                        discounted_sum: newDiscountedSum,
+                        difference: Math.abs(result.receipt_total - newDiscountedSum),
+                      });
                     }}
                     className="flex-1 h-9 text-xs"
                     disabled={result.items.some(i => i.discount_amount > 0)}
                   >
-                    ✅ Com descontos
+                    ✅ Aplicar descontos
                   </Button>
                   <Button
                     variant={result.items.every(i => i.discount_amount === 0) ? "default" : "outline"}
@@ -622,12 +636,6 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
                 </p>
               </motion.div>
             )}
-            {!saved && (
-              <Button variant="destructive" onClick={reset} className="w-full h-10">
-                <X className="w-4 h-4 mr-2" />
-                Cancelar
-              </Button>
-            )}
             <Button variant="outline" onClick={reset} className="w-full">
               Escanear outro cupom
             </Button>
@@ -747,20 +755,9 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
               <Check className="w-4 h-4 mr-2" />
               Processar {images.length} foto(s) com IA
             </Button>
-            <Button variant="destructive" onClick={reset} className="w-full h-10">
-              <X className="w-4 h-4 mr-2" />
-              Cancelar
-            </Button>
           </div>
         )}
 
-        {/* Cancel button for single mode before photo */}
-        {mode === 'single' && images.length === 0 && (
-          <Button variant="destructive" onClick={reset} className="w-full h-10">
-            <X className="w-4 h-4 mr-2" />
-            Cancelar
-          </Button>
-        )}
       </div>
     </div>
   );

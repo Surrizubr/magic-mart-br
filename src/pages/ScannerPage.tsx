@@ -46,6 +46,7 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
   const [saved, setSaved] = useState(false);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [originalDiscounts, setOriginalDiscounts] = useState<Map<string, { discount_amount: number; discounted_price: number; discount: number }>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
@@ -111,6 +112,15 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
 
       const itemsSum = items.reduce((s: number, i: ReceiptItem) => s + i.total_price, 0);
       const discountedSum = items.reduce((s: number, i: ReceiptItem) => s + i.discounted_price, 0);
+
+      // Store original discounts for toggle
+      const discountMap = new Map<string, { discount_amount: number; discounted_price: number; discount: number }>();
+      items.forEach(item => {
+        if (item.discount_amount > 0) {
+          discountMap.set(item.id, { discount_amount: item.discount_amount, discounted_price: item.discounted_price, discount: data.discount || 0 });
+        }
+      });
+      setOriginalDiscounts(discountMap);
 
       setResult({
         ...data,
@@ -415,10 +425,58 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
                 <Package className="w-4 h-4 mr-2" />
                 Salvar no Estoque e Histórico
               </Button>
-              <Button variant="destructive" onClick={reset} className="w-full h-10">
-                <X className="w-4 h-4 mr-2" />
-                Cancelar
-              </Button>
+              {/* Discount toggle buttons */}
+              {originalDiscounts.size > 0 && (
+                <div className="flex gap-2">
+                  <Button
+                    variant={result.items.some(i => i.discount_amount > 0) ? "default" : "outline"}
+                    onClick={() => {
+                      const newItems = result.items.map(item => {
+                        const orig = originalDiscounts.get(item.id);
+                        if (orig) {
+                          return { ...item, discount_amount: orig.discount_amount, discounted_price: orig.discounted_price };
+                        }
+                        return item;
+                      });
+                      const origDiscount = Array.from(originalDiscounts.values())[0]?.discount || 0;
+                      const newDiscountedSum = newItems.reduce((s, i) => s + i.discounted_price, 0);
+                      setResult({
+                        ...result,
+                        items: newItems,
+                        discount: origDiscount,
+                        discounted_sum: newDiscountedSum,
+                        difference: Math.abs(result.receipt_total - newDiscountedSum),
+                      });
+                    }}
+                    className="flex-1 h-9 text-xs"
+                    disabled={result.items.some(i => i.discount_amount > 0)}
+                  >
+                    ✅ Aplicar descontos
+                  </Button>
+                  <Button
+                    variant={result.items.every(i => i.discount_amount === 0) ? "default" : "outline"}
+                    onClick={() => {
+                      const newItems = result.items.map(item => ({
+                        ...item,
+                        discount_amount: 0,
+                        discounted_price: item.total_price,
+                      }));
+                      const newDiscountedSum = newItems.reduce((s, i) => s + i.discounted_price, 0);
+                      setResult({
+                        ...result,
+                        items: newItems,
+                        discount: 0,
+                        discounted_sum: newDiscountedSum,
+                        difference: Math.abs(result.receipt_total - newDiscountedSum),
+                      });
+                    }}
+                    className="flex-1 h-9 text-xs"
+                    disabled={result.items.every(i => i.discount_amount === 0)}
+                  >
+                    ❌ Sem descontos
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
@@ -578,12 +636,6 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
                 </p>
               </motion.div>
             )}
-            {!saved && (
-              <Button variant="destructive" onClick={reset} className="w-full h-10">
-                <X className="w-4 h-4 mr-2" />
-                Cancelar
-              </Button>
-            )}
             <Button variant="outline" onClick={reset} className="w-full">
               Escanear outro cupom
             </Button>
@@ -703,20 +755,9 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
               <Check className="w-4 h-4 mr-2" />
               Processar {images.length} foto(s) com IA
             </Button>
-            <Button variant="destructive" onClick={reset} className="w-full h-10">
-              <X className="w-4 h-4 mr-2" />
-              Cancelar
-            </Button>
           </div>
         )}
 
-        {/* Cancel button for single mode before photo */}
-        {mode === 'single' && images.length === 0 && (
-          <Button variant="destructive" onClick={reset} className="w-full h-10">
-            <X className="w-4 h-4 mr-2" />
-            Cancelar
-          </Button>
-        )}
       </div>
     </div>
   );

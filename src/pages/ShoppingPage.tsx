@@ -439,7 +439,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
                 step="0.01"
                 value={newPrice}
                 onChange={(e) => setNewPrice(e.target.value)}
-                placeholder="R$ 0,00"
+                placeholder={`${currency} 0,00`}
                 className="w-24 p-2.5 rounded-lg border border-border bg-background text-foreground text-sm"
               />
             </div>

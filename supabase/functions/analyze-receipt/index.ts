@@ -114,7 +114,7 @@ Você DEVE:
 
     const response = await fetch(apiUrl, {
       method: "POST",
-      headers,
+      headers: apiHeaders,
       body: JSON.stringify({
         model,
         messages: [

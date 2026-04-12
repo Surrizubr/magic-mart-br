@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
-import { Camera, Images, X, Loader2, Check, ArrowLeft, Package, MapPin, Trash2, AlertTriangle, Edit2 } from 'lucide-react';
+import { Camera, Images, X, Loader2, Check, ArrowLeft, Package, MapPin, Trash2, AlertTriangle, Edit2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -211,6 +211,33 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
     });
   };
 
+  const addItem = () => {
+    if (!result) return;
+    const newId = `ai-new-${Date.now()}`;
+    const newItem: ReceiptItem = {
+      id: newId,
+      product_name: 'Novo Produto',
+      quantity: 1,
+      unit: 'un',
+      unit_price: 0,
+      total_price: 0,
+      discount_amount: 0,
+      discounted_price: 0,
+      category: 'Outros',
+    };
+    const newItems = [...result.items, newItem];
+    const newSum = newItems.reduce((s, i) => s + i.total_price, 0);
+    const newDiscountedSum = newItems.reduce((s, i) => s + i.discounted_price, 0);
+    setResult({
+      ...result,
+      items: newItems,
+      items_sum: newSum,
+      discounted_sum: newDiscountedSum,
+      difference: Math.abs(result.receipt_total - newDiscountedSum),
+    });
+    setEditingItem(newId);
+  };
+
   // Mode selection screen
   if (mode === 'choose') {
     return (
@@ -361,10 +388,11 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
                 <span className="text-sm font-bold text-primary">R$ {result.receipt_total.toFixed(2)}</span>
               </div>
               {hasDifference && (
-                <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2 mt-1">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2 mt-1">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <span className="text-xs text-amber-700 dark:text-amber-400">
-                    Diferença de R$ {result.difference.toFixed(2)} entre o total do cupom e a soma com desconto
+                    Diferença de R$ {result.difference.toFixed(2)} entre o total do cupom e a soma dos itens.
+                    Algum item pode não ter sido identificado corretamente. Ajuste preços, quantidades, ou adicione/remova itens abaixo.
                   </span>
                 </div>
               )}
@@ -510,6 +538,14 @@ export function ScannerPage({ onBack }: ScannerPageProps) {
               );
             })}
           </div>
+
+          {/* Add item button */}
+          {!saved && (
+            <Button variant="outline" onClick={addItem} className="w-full h-10">
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Item
+            </Button>
+          )}
 
           {result.items.length === 0 && (
             <div className="text-center py-8">

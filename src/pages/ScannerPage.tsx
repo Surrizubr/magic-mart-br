@@ -1,8 +1,7 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/PageHeader';
-import { Camera, Images, X, Loader2, Check, ArrowLeft, Package, MapPin, Trash2, AlertTriangle, Edit2, Plus, History, Eye, HelpCircle } from 'lucide-react';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Camera, Images, X, Loader2, Check, ArrowLeft, Package, MapPin, Trash2, AlertTriangle, Edit2, Plus, History, Eye, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';

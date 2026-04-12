@@ -100,12 +100,12 @@ export function ReportsPage({ onBack, onNavigate }: ReportsPageProps) {
             <p className="text-xl font-bold text-foreground">R$ {currentMonth.toFixed(2)}</p>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Média/Mês</p>
           </div>
-          <div className="bg-card rounded-xl border border-border p-4">
+          <button onClick={() => onNavigate?.('history')} className="bg-card rounded-xl border border-border p-4 text-left hover:bg-accent/50 transition-colors">
             <ShoppingCart className="w-5 h-5 text-primary mb-2" />
             <p className="text-xl font-bold text-foreground">{totalVisits}</p>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Idas ao Mercado</p>
             <p className="text-[10px] text-primary font-medium mt-0.5">ver detalhes →</p>
-          </div>
+          </button>
           <div className="bg-card rounded-xl border border-border p-4">
             <Clock className="w-5 h-5 text-muted-foreground mb-2" />
             <p className="text-xl font-bold text-foreground">--</p>

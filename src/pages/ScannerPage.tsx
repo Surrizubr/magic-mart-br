@@ -395,11 +395,7 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
         <PageHeader
           title="Histórico de Cupons"
           subtitle={`${scannedReceipts.length} cupons escaneados`}
-          action={
-            <button onClick={reset} className="text-sm text-primary font-medium flex items-center gap-1">
-              <ArrowLeft className="w-4 h-4" /> Voltar
-            </button>
-          }
+          onBack={reset}
         />
         <div className="p-4 space-y-3">
           {scannedReceipts.length === 0 ? (
@@ -530,11 +526,7 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
         <PageHeader
           title="Resultado"
           subtitle={`${result.items.length} itens encontrados`}
-          action={
-            <button onClick={reset} className="text-sm text-primary font-medium flex items-center gap-1">
-              <ArrowLeft className="w-4 h-4" /> Novo
-            </button>
-          }
+          onBack={reset}
         />
         <div className="p-4 space-y-4">
           {/* Store & date info */}
@@ -851,11 +843,7 @@ export function ScannerPage({ onBack, onNavigateToHistory }: ScannerPageProps) {
       <PageHeader
         title={mode === 'single' ? 'Foto Única' : 'Múltiplas Fotos'}
         subtitle={mode === 'single' ? 'Tire uma foto do cupom' : `${images.length} foto(s) adicionada(s)`}
-        action={
-          <button onClick={reset} className="text-sm text-primary font-medium flex items-center gap-1">
-            <ArrowLeft className="w-4 h-4" /> Voltar
-          </button>
-        }
+        onBack={reset}
       />
 
       <input

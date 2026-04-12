@@ -273,11 +273,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
         <PageHeader
           title={mode === 'register' ? 'Registrar Compra' : 'Compra por Categoria'}
           subtitle="Informe o local de compras"
-          left={
-            <button onClick={() => setMode(null)} className="p-1">
-              <ArrowLeft className="w-5 h-5 text-foreground" />
-            </button>
-          }
+          onBack={() => setMode(null)}
         />
         <div className="px-4 pt-6 space-y-4">
           <div className="bg-card rounded-xl border border-border p-4 space-y-3">
@@ -318,11 +314,7 @@ export function ShoppingPage({ onNavigate, onBack }: ShoppingPageProps) {
       <PageHeader
         title="Compras em andamento"
         subtitle={storeName}
-        left={
-          <button onClick={() => { setStoreSet(false); setMode(null); }} className="p-1">
-            <ArrowLeft className="w-5 h-5 text-foreground" />
-          </button>
-        }
+        onBack={() => { setStoreSet(false); setMode(null); }}
       />
 
       {/* Total bar */}

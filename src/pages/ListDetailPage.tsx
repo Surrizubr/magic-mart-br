@@ -177,11 +177,7 @@ export function ListDetailPage({ list, onBack, onUpdateList, onFinishShopping }:
       <PageHeader
         title={list.name}
         subtitle={shoppingMode ? `${checkedCount}/${items.length} selecionados` : `${items.length} itens`}
-        action={
-          <button onClick={onBack} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-            <ArrowLeft className="w-4 h-4 text-secondary-foreground" />
-          </button>
-        }
+        onBack={onBack}
       />
 
       <div className="p-4 space-y-3">

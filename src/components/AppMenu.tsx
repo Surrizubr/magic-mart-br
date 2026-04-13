@@ -209,6 +209,9 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
                 <p className="text-sm font-semibold text-foreground">{t('geminiHelpTitle')}</p>
               </div>
               <p className="text-xs text-muted-foreground whitespace-pre-line">{t('geminiHelpSteps')}</p>
+              <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-xs text-primary underline">
+                https://aistudio.google.com/
+              </a>
             </div>
           </div>
         );

@@ -54,8 +54,8 @@ export function StockPage({ onBack }: StockPageProps) {
       product_name: stockItem.product_name,
       category: stockItem.category,
       quantity: qty,
-      price: price,
-      total_price: price * qty,
+      price: qty > 0 ? price / qty : price,
+      total_price: price,
       store_name: 'Entrada Manual',
       purchase_date: new Date().toISOString().split('T')[0],
     };

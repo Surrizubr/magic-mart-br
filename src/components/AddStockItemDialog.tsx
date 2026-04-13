@@ -35,18 +35,20 @@ export function AddStockItemDialog({ open, onOpenChange, onAdd }: AddStockItemDi
 
   const handleAdd = () => {
     if (!name.trim()) return;
-    const priceVal = Math.max(0, Number(price) || 0);
+    const totalPrice = Math.max(0, Number(price) || 0);
+    const qty = Math.max(0, Number(quantity) || 1);
+    const unitPrice = qty > 0 ? totalPrice / qty : totalPrice;
     const item: AddStockItemResult = {
       id: crypto.randomUUID(),
       product_name: name.trim(),
       category,
-      quantity: Math.max(0, Number(quantity) || 0),
+      quantity: qty,
       unit,
       min_quantity: Math.max(0, Number(minQuantity) || 1),
       daily_consumption_rate: 0,
       status: 'ok',
-      last_price: priceVal,
-      price: priceVal,
+      last_price: unitPrice,
+      price: totalPrice,
     };
     onAdd(item);
     resetForm();

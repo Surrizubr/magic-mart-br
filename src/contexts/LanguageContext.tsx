@@ -108,6 +108,14 @@ const translations: Record<string, Record<Lang, string>> = {
   minQuantity: { pt: 'Qtd. mínima', en: 'Min. quantity', es: 'Cant. mínima' },
   addItem: { pt: 'Adicionar', en: 'Add', es: 'Agregar' },
   price: { pt: 'Valor', en: 'Price', es: 'Precio' },
+  trialDaysLeft: { pt: 'restante do período de teste', en: 'left in trial period', es: 'restante del período de prueba' },
+  trialDaysLeftPlural: { pt: 'restantes do período de teste', en: 'left in trial period', es: 'restantes del período de prueba' },
+  premiumTitle: { pt: 'Premium', en: 'Premium', es: 'Premium' },
+  premiumDesc: { pt: 'Acesso completo por', en: 'Full access for', es: 'Acceso completo por' },
+  premiumPerYear: { pt: '/ano', en: '/year', es: '/año' },
+  premiumSubscribe: { pt: 'Assinar', en: 'Subscribe', es: 'Suscribir' },
+  day: { pt: 'dia', en: 'day', es: 'día' },
+  dayPlural: { pt: 'dias', en: 'days', es: 'días' },
 };
 
 function formatNumber(value: number, curr: string): string {

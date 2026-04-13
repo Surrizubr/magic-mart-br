@@ -106,6 +106,17 @@ export function LoginPage() {
             {isSignUp ? 'Entrar' : 'Criar conta'}
           </button>
         </p>
+
+        <p className="text-center text-[10px] text-muted-foreground/70 mt-4">
+          Ao continuar, você concorda com nossos{' '}
+          <a href="https://www.idapps.com.br/terms" target="_blank" rel="noopener noreferrer" className="underline">
+            Termos de Uso
+          </a>{' '}
+          e{' '}
+          <a href="https://www.idapps.com.br/privacy" target="_blank" rel="noopener noreferrer" className="underline">
+            Política de Privacidade
+          </a>
+        </p>
       </motion.div>
     </div>
   );

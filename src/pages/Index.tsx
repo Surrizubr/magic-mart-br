@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
-import { LoginPage } from '@/pages/LoginPage';
-import { TrialBanner } from '@/components/TrialBanner';
-import { PremiumBanner } from '@/components/PremiumBanner';
+import { FirstAccessBanner, ExpiryBanner } from '@/components/SubscriptionBanner';
 import { BottomNav } from '@/components/BottomNav';
 import { AppMenu } from '@/components/AppMenu';
 import { HomePage } from '@/pages/HomePage';
@@ -19,14 +16,12 @@ import { SharePage } from '@/pages/SharePage';
 import { TabId } from '@/types';
 
 const Index = () => {
-  const { user, loading: authLoading } = useAuth();
-  const { status, daysLeft, openCheckout } = useSubscription();
+  const { status, profile, daysUntilExpiry, openCheckout } = useSubscription();
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [menuOpen, setMenuOpen] = useState(false);
   const [historyFilter, setHistoryFilter] = useState<{ date?: string; store?: string }>({});
 
-  // Show loading
-  if (authLoading) {
+  if (status === 'loading') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-12 h-12 rounded-full gradient-primary animate-pulse" />
@@ -34,14 +29,9 @@ const Index = () => {
     );
   }
 
-  // Show login if not authenticated
-  if (!user) {
-    return <LoginPage />;
-  }
-
   const goHome = () => setActiveTab('home');
-  const isTrial = status === 'trial';
-  const showBanners = status === 'trial' || status === 'expired';
+  const showFirstAccessBanner = status === 'new' || status === 'expired';
+  const showExpiryBanner = status === 'expiring';
 
   const navigateToHistoryFiltered = (date: string, store: string) => {
     setHistoryFilter({ date, store });
@@ -50,7 +40,7 @@ const Index = () => {
 
   const renderPage = () => {
     switch (activeTab) {
-      case 'home': return <HomePage daysLeft={daysLeft} isTrial={isTrial} onNavigate={setActiveTab} onOpenMenu={() => setMenuOpen(true)} />;
+      case 'home': return <HomePage displayName={profile?.display_name} onNavigate={setActiveTab} onOpenMenu={() => setMenuOpen(true)} />;
       case 'lists': return <ListsPage onBack={goHome} />;
       case 'stock': return <StockPage onBack={goHome} />;
       case 'savings': return <SavingsPage onBack={goHome} onNavigateToHistory={navigateToHistoryFiltered} />;
@@ -64,6 +54,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background max-w-lg mx-auto relative">
+      {showFirstAccessBanner && (
+        <FirstAccessBanner onSubscribe={openCheckout} />
+      )}
+
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
@@ -76,11 +70,9 @@ const Index = () => {
         </motion.div>
       </AnimatePresence>
 
-      {/* Banners inline at the bottom of content, before bottom nav padding */}
-      {showBanners && (
-        <div className="pb-20 px-0">
-          <PremiumBanner onUpgrade={openCheckout} />
-          {isTrial && <TrialBanner daysLeft={daysLeft} onUpgrade={openCheckout} />}
+      {showExpiryBanner && (
+        <div className="pb-20">
+          <ExpiryBanner daysLeft={daysUntilExpiry} onRenew={openCheckout} />
         </div>
       )}
 

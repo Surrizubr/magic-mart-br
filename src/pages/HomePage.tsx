@@ -9,8 +9,7 @@ import { addToReminderList } from '@/lib/reminderList';
 import { toast } from 'sonner';
 
 interface HomePageProps {
-  daysLeft: number;
-  isTrial: boolean;
+  displayName?: string;
   onNavigate: (tab: TabId) => void;
   onOpenMenu?: () => void;
 }
@@ -24,7 +23,7 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
-export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePageProps) {
+export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps) {
   const { currency, formatCurrency: fc } = useLanguage();
   const [stockState, setStockState] = useState<StockItem[]>(() => getStock());
   const [listsState, setListsState] = useState<ShoppingList[]>(() => getLists());
@@ -80,7 +79,7 @@ export function HomePage({ daysLeft, isTrial, onNavigate, onOpenMenu }: HomePage
               <Settings className="w-6 h-6 text-primary-foreground" />
             </button>
             <div>
-              <p className="text-sm text-muted-foreground">Olá, Usuário 👋</p>
+              <p className="text-sm text-muted-foreground">Olá, {displayName || 'Usuário'} 👋</p>
               <h1 className="text-xl font-bold text-foreground">Magicmart AI</h1>
               <p className="text-xs text-muted-foreground capitalize">{dateStr}</p>
             </div>

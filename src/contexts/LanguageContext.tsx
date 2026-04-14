@@ -116,6 +116,15 @@ const translations: Record<string, Record<Lang, string>> = {
   premiumSubscribe: { pt: 'Assinar', en: 'Subscribe', es: 'Suscribir' },
   day: { pt: 'dia', en: 'day', es: 'día' },
   dayPlural: { pt: 'dias', en: 'days', es: 'días' },
+  subBannerTitle: { pt: 'Assine o Magicmart AI', en: 'Subscribe to Magicmart AI', es: 'Suscríbete a Magicmart AI' },
+  subBannerCancel: { pt: '30 dias para cancelar', en: '30 days to cancel', es: '30 días para cancelar' },
+  subExpiryWarning: { pt: 'para a assinatura expirar. Renove agora!', en: 'until subscription expires. Renew now!', es: 'para que expire la suscripción. ¡Renueva ahora!' },
+  payment: { pt: 'Pagamento', en: 'Payment', es: 'Pago' },
+  paymentDesc: { pt: 'Gerenciar assinatura', en: 'Manage subscription', es: 'Gestionar suscripción' },
+  renew: { pt: 'Renovar', en: 'Renew', es: 'Renovar' },
+  refund: { pt: 'Reembolso', en: 'Refund', es: 'Reembolso' },
+  renewDesc: { pt: 'Renovar assinatura anual', en: 'Renew annual subscription', es: 'Renovar suscripción anual' },
+  refundDesc: { pt: 'Solicitar reembolso (até 30 dias)', en: 'Request refund (up to 30 days)', es: 'Solicitar reembolso (hasta 30 días)' },
 };
 
 function formatNumber(value: number, curr: string): string {

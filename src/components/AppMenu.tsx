@@ -1,13 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Palette, Globe, Settings, Info, LogOut, RotateCcw, Trash2, Sun, Moon, Type, ChevronRight, ArrowLeft, Check, Key, ClipboardPaste, Save, HelpCircle } from 'lucide-react';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { X, Palette, Globe, Settings, Info, RotateCcw, Sun, Moon, Type, ChevronRight, ArrowLeft, Check, Key, ClipboardPaste, Save, HelpCircle, CreditCard, RefreshCw, Undo2 } from 'lucide-react';
 import { useTheme, ThemeMode } from '@/contexts/ThemeContext';
 import { useLanguage, Lang } from '@/contexts/LanguageContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
-import { supabase } from '@/integrations/supabase/client';
+import { useSubscription } from '@/hooks/useSubscription';
 import { resetAllData } from '@/data/mockData';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -20,7 +18,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-type SubMenu = null | 'themes' | 'languages' | 'preferences' | 'about' | 'gemini';
+type SubMenu = null | 'themes' | 'languages' | 'preferences' | 'about' | 'gemini' | 'payment';
 
 interface AppMenuProps {
   open: boolean;
@@ -31,31 +29,29 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
   const { theme, setTheme, largeText, setLargeText } = useTheme();
   const { lang, setLang, t } = useLanguage();
   const { stockExpiryDays, setStockExpiryDays } = usePreferences();
+  const { profile, openCheckout, openPortal } = useSubscription();
   const [subMenu, setSubMenu] = useState<SubMenu>(null);
   const [confirmReset, setConfirmReset] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [geminiKey, setGeminiKey] = useState('');
   const [geminiHasKey, setGeminiHasKey] = useState(() => !!localStorage.getItem('gemini-api-key'));
-  const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
-    onClose();
-  };
+  // Check if within 30 days of subscription start (for refund eligibility)
+  const [canRefund, setCanRefund] = useState(false);
+  useEffect(() => {
+    if (profile?.subscription_end) {
+      const end = new Date(profile.subscription_end);
+      const start = new Date(end);
+      start.setFullYear(start.getFullYear() - 1);
+      const daysSinceStart = Math.floor((Date.now() - start.getTime()) / (1000 * 60 * 60 * 24));
+      setCanRefund(daysSinceStart <= 30);
+    }
+  }, [profile]);
 
   const handleReset = () => {
     resetAllData();
     setConfirmReset(false);
     onClose();
     window.location.reload();
-  };
-
-  const handleDeleteAccount = async () => {
-    await supabase.auth.signOut();
-    setConfirmDelete(false);
-    navigate('/');
-    onClose();
   };
 
   const handleGeminiPaste = async () => {
@@ -92,13 +88,8 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
     { id: 'languages' as SubMenu, icon: Globe, label: t('languages'), desc: t('langDesc') },
     { id: 'preferences' as SubMenu, icon: Settings, label: t('preferences'), desc: t('prefDesc') },
     { id: 'gemini' as SubMenu, icon: Key, label: t('geminiApiKey'), desc: geminiHasKey ? t('geminiConfigured') : t('geminiNotConfigured') },
+    { id: 'payment' as SubMenu, icon: CreditCard, label: t('payment'), desc: t('paymentDesc') },
     { id: 'about' as SubMenu, icon: Info, label: t('about'), desc: t('aboutDesc') },
-  ];
-
-  const dangerItems = [
-    { icon: LogOut, label: t('logout'), desc: t('logoutDesc'), action: handleLogout, danger: false },
-    { icon: RotateCcw, label: t('resetAll'), desc: t('resetDesc'), action: () => setConfirmReset(true), danger: true },
-    { icon: Trash2, label: t('deleteAccount'), desc: t('deleteDesc'), action: () => setConfirmDelete(true), danger: true },
   ];
 
   const renderSubMenu = () => {
@@ -191,7 +182,7 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
                   onClick={handleGeminiDelete}
                   className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm font-medium hover:bg-destructive/20 transition-colors"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <X className="w-4 h-4" />
                   {t('geminiDelete')}
                 </button>
                 <button
@@ -213,6 +204,34 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
                 https://aistudio.google.com/
               </a>
             </div>
+          </div>
+        );
+
+      case 'payment':
+        return (
+          <div className="space-y-2">
+            <button
+              onClick={() => { openCheckout(); onClose(); }}
+              className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:bg-accent transition-colors"
+            >
+              <RefreshCw className="w-5 h-5 text-primary" />
+              <div className="text-left flex-1">
+                <p className="text-sm font-medium text-foreground">{t('renew')}</p>
+                <p className="text-xs text-muted-foreground">{t('renewDesc')}</p>
+              </div>
+            </button>
+            {canRefund && (
+              <button
+                onClick={() => { openPortal(); onClose(); }}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:bg-accent transition-colors"
+              >
+                <Undo2 className="w-5 h-5 text-destructive" />
+                <div className="text-left flex-1">
+                  <p className="text-sm font-medium text-foreground">{t('refund')}</p>
+                  <p className="text-xs text-muted-foreground">{t('refundDesc')}</p>
+                </div>
+              </button>
+            )}
           </div>
         );
 
@@ -258,7 +277,7 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
               className="fixed right-0 top-0 bottom-0 w-[85%] max-w-sm bg-background z-50 shadow-2xl overflow-y-auto"
             >
               <div className="p-4">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4">
                   {subMenu ? (
                     <button onClick={() => setSubMenu(null)} className="p-1">
                       <ArrowLeft className="w-5 h-5 text-foreground" />
@@ -270,6 +289,14 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
                     <X className="w-5 h-5 text-muted-foreground" />
                   </button>
                 </div>
+
+                {/* User info at the top */}
+                {!subMenu && profile && (
+                  <div className="mb-4 p-3 rounded-xl bg-card border border-border">
+                    <p className="text-sm font-bold text-foreground">{profile.display_name}</p>
+                    <p className="text-xs text-muted-foreground">{profile.email}</p>
+                  </div>
+                )}
 
                 {subMenu ? (
                   <div>
@@ -297,23 +324,16 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
 
                     <div className="border-t border-border my-3" />
 
-                    {dangerItems.map((item, i) => (
-                      <button
-                        key={i}
-                        onClick={item.action}
-                        className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors ${
-                          item.danger
-                            ? 'bg-destructive/5 border-destructive/20 hover:bg-destructive/10'
-                            : 'bg-card border-border hover:bg-accent'
-                        }`}
-                      >
-                        <item.icon className={`w-5 h-5 ${item.danger ? 'text-destructive' : 'text-muted-foreground'}`} />
-                        <div className="text-left flex-1">
-                          <p className={`text-sm font-medium ${item.danger ? 'text-destructive' : 'text-foreground'}`}>{item.label}</p>
-                          <p className="text-xs text-muted-foreground">{item.desc}</p>
-                        </div>
-                      </button>
-                    ))}
+                    <button
+                      onClick={() => setConfirmReset(true)}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-destructive/5 border border-destructive/20 hover:bg-destructive/10 transition-colors"
+                    >
+                      <RotateCcw className="w-5 h-5 text-destructive" />
+                      <div className="text-left flex-1">
+                        <p className="text-sm font-medium text-destructive">{t('resetAll')}</p>
+                        <p className="text-xs text-muted-foreground">{t('resetDesc')}</p>
+                      </div>
+                    </button>
                   </div>
                 )}
               </div>
@@ -331,21 +351,6 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
           <AlertDialogFooter>
             <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleReset} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {t('confirm')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('deleteAccount')}</AlertDialogTitle>
-            <AlertDialogDescription>{t('confirmDelete')}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {t('confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>

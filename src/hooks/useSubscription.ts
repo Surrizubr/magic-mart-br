@@ -114,7 +114,11 @@ export function useSubscription() {
 
   const openPortal = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('customer-portal');
+      const email = localStorage.getItem('magicmart_email');
+      if (!email) return;
+      const { data, error } = await supabase.functions.invoke('customer-portal', {
+        body: { email },
+      });
       if (error) throw error;
       if (data?.url) window.open(data.url, '_blank');
     } catch (err: any) {

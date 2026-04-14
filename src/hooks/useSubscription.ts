@@ -28,7 +28,7 @@ export function useSubscription() {
         .from('profiles')
         .select('id, user_id, display_name, subscription_end')
         .eq('id', profileId)
-        .single();
+        .single() as { data: any; error: any };
 
       if (error || !data) {
         localStorage.removeItem('magicmart_profile_id');

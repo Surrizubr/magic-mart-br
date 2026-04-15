@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,28 +17,31 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
-    // Check if email was provided (returning user)
-    let customerEmail: string | undefined;
-    let customerId: string | undefined;
-    try {
-      const body = await req.json();
-      customerEmail = body?.email;
-    } catch {
-      // No body, that's fine
-    }
+    // Get authenticated user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("Not authenticated");
 
-    if (customerEmail) {
-      const customers = await stripe.customers.list({ email: customerEmail, limit: 1 });
-      if (customers.data.length > 0) {
-        customerId = customers.data[0].id;
-      }
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user?.email) throw new Error("Not authenticated");
+
+    // Check if customer already exists
+    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    let customerId: string | undefined;
+    if (customers.data.length > 0) {
+      customerId = customers.data[0].id;
     }
 
     const origin = req.headers.get("origin") || "https://magic-mart-br.lovable.app";
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : customerEmail,
+      customer_email: customerId ? undefined : user.email,
       line_items: [{ price: "price_1TKgePRsLFesxj6Xo0fLdtGA", quantity: 1 }],
       mode: "subscription",
       success_url: `${origin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,

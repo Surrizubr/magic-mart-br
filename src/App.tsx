@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
+import { AuthGuard } from "@/components/AuthGuard";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -21,8 +22,12 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="*" element={<NotFound />} />
+                <Route path="/" element={
+                  <AuthGuard>
+                    <Index />
+                  </AuthGuard>
+                } />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
           </TooltipProvider>

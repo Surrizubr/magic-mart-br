@@ -20,6 +20,9 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          stripe_customer_id: string | null
+          stripe_status: string
+          subscription_end: string | null
           trial_started_at: string
           updated_at: string
           user_id: string
@@ -29,6 +32,9 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          stripe_customer_id?: string | null
+          stripe_status?: string
+          subscription_end?: string | null
           trial_started_at?: string
           updated_at?: string
           user_id: string
@@ -38,6 +44,9 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          stripe_customer_id?: string | null
+          stripe_status?: string
+          subscription_end?: string | null
           trial_started_at?: string
           updated_at?: string
           user_id?: string

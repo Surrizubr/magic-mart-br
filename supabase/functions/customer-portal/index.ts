@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,11 +16,20 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
-    const { email } = await req.json();
-    if (!email) throw new Error("Email is required");
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("Not authenticated");
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user?.email) throw new Error("Not authenticated");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email, limit: 1 });
+    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     if (customers.data.length === 0) throw new Error("No Stripe customer found");
 
     const origin = req.headers.get("origin") || "https://magic-mart-br.lovable.app";

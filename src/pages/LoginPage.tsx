@@ -1,33 +1,10 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
 import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export function LoginPage() {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        toast.success('Verifique seu e-mail para confirmar a conta');
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      }
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { t } = useLanguage();
 
   const handleGoogleLogin = async () => {
     const result = await lovable.auth.signInWithOAuth("google", {
@@ -51,7 +28,7 @@ export function LoginPage() {
             <span className="text-3xl">🌿</span>
           </div>
           <h1 className="text-2xl font-bold text-foreground">Magicmart AI</h1>
-          <p className="text-sm text-muted-foreground">Sua despensa inteligente</p>
+          <p className="text-sm text-muted-foreground">{t('appTagline') || 'Sua despensa inteligente'}</p>
         </div>
 
         <button
@@ -64,48 +41,8 @@ export function LoginPage() {
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
           </svg>
-          <span className="text-sm font-medium text-foreground">Entrar com Google</span>
+          <span className="text-sm font-medium text-foreground">{t('loginWithGoogle')}</span>
         </button>
-
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-xs text-muted-foreground">ou</span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
-
-        <form onSubmit={handleEmailAuth} className="space-y-3">
-          <input
-            type="email"
-            placeholder="E-mail"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full p-3 rounded-xl border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-          />
-          <input
-            type="password"
-            placeholder="Senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            className="w-full p-3 rounded-xl border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full p-3 rounded-xl gradient-primary text-primary-foreground text-sm font-bold disabled:opacity-50"
-          >
-            {loading ? '...' : isSignUp ? 'Criar conta' : 'Entrar'}
-          </button>
-        </form>
-
-        <p className="text-center text-xs text-muted-foreground">
-          {isSignUp ? 'Já tem conta?' : 'Não tem conta?'}{' '}
-          <button onClick={() => setIsSignUp(!isSignUp)} className="text-primary font-medium">
-            {isSignUp ? 'Entrar' : 'Criar conta'}
-          </button>
-        </p>
 
         <p className="text-center text-[10px] text-muted-foreground/70 mt-4">
           Ao continuar, você concorda com nossos{' '}

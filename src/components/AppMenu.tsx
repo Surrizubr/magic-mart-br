@@ -29,7 +29,7 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
   const { theme, setTheme, largeText, setLargeText } = useTheme();
   const { lang, setLang, t } = useLanguage();
   const { stockExpiryDays, setStockExpiryDays } = usePreferences();
-  const { profile, openCheckout, openPortal } = useSubscription();
+  const { info, openCheckout, openPortal } = useSubscription();
   const [subMenu, setSubMenu] = useState<SubMenu>(null);
   const [confirmReset, setConfirmReset] = useState(false);
   const [geminiKey, setGeminiKey] = useState('');

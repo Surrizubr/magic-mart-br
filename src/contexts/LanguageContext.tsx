@@ -125,6 +125,13 @@ const translations: Record<string, Record<Lang, string>> = {
   refund: { pt: 'Reembolso', en: 'Refund', es: 'Reembolso' },
   renewDesc: { pt: 'Renovar assinatura anual', en: 'Renew annual subscription', es: 'Renovar suscripción anual' },
   refundDesc: { pt: 'Solicitar reembolso (até 30 dias)', en: 'Request refund (up to 30 days)', es: 'Solicitar reembolso (hasta 30 días)' },
+  appTagline: { pt: 'Sua despensa inteligente', en: 'Your smart pantry', es: 'Tu despensa inteligente' },
+  pricingDesc: { pt: 'Gerencie compras, estoque e gastos com inteligência artificial.', en: 'Manage shopping, stock and expenses with artificial intelligence.', es: 'Gestiona compras, stock y gastos con inteligencia artificial.' },
+  pricingFeature1: { pt: 'Scanner de cupons com IA', en: 'AI-powered receipt scanner', es: 'Escáner de recibos con IA' },
+  pricingFeature2: { pt: 'Controle de estoque inteligente', en: 'Smart inventory control', es: 'Control de inventario inteligente' },
+  pricingFeature3: { pt: 'Relatórios de economia', en: 'Savings reports', es: 'Informes de ahorro' },
+  pricingFeature4: { pt: 'Listas de compras ilimitadas', en: 'Unlimited shopping lists', es: 'Listas de compras ilimitadas' },
+  pricingFeature5: { pt: '30 dias para cancelar e reembolso', en: '30 days to cancel and refund', es: '30 días para cancelar y reembolso' },
 };
 
 function formatNumber(value: number, curr: string): string {

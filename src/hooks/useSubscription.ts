@@ -1,73 +1,75 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
-export type SubStatus = 'loading' | 'new' | 'active' | 'expiring' | 'expired';
+export type SubStatus = 'active' | 'expiring' | 'inactive';
 
-export interface UserProfile {
-  id: string;
-  email: string;
-  display_name: string;
+export interface SubscriptionInfo {
+  stripe_status: string;
+  stripe_customer_id: string | null;
   subscription_end: string | null;
+  display_name: string | null;
+  email: string;
 }
 
 export function useSubscription() {
-  const [status, setStatus] = useState<SubStatus>('loading');
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const { user } = useAuth();
+  const [status, setStatus] = useState<SubStatus>('inactive');
+  const [loading, setLoading] = useState(true);
+  const [info, setInfo] = useState<SubscriptionInfo | null>(null);
   const [daysUntilExpiry, setDaysUntilExpiry] = useState(0);
 
   const checkSubscription = useCallback(async () => {
-    const profileId = localStorage.getItem('magicmart_profile_id');
-    
-    if (!profileId) {
-      setStatus('new');
+    if (!user) {
+      setStatus('inactive');
+      setLoading(false);
       return;
     }
 
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, user_id, display_name, subscription_end')
-        .eq('id', profileId)
-        .single() as { data: any; error: any };
+        .select('stripe_status, stripe_customer_id, subscription_end, display_name, user_id')
+        .eq('user_id', user.id)
+        .single();
 
       if (error || !data) {
-        localStorage.removeItem('magicmart_profile_id');
-        localStorage.removeItem('magicmart_email');
-        localStorage.removeItem('magicmart_name');
-        setStatus('new');
+        setStatus('inactive');
+        setLoading(false);
         return;
       }
 
-      const userProfile: UserProfile = {
-        id: data.id,
-        email: data.user_id,
-        display_name: data.display_name || '',
-        subscription_end: data.subscription_end,
+      const profile: SubscriptionInfo = {
+        stripe_status: (data as any).stripe_status || 'inactive',
+        stripe_customer_id: (data as any).stripe_customer_id,
+        subscription_end: (data as any).subscription_end,
+        display_name: data.display_name,
+        email: user.email || '',
       };
-      setProfile(userProfile);
+      setInfo(profile);
 
-      if (!data.subscription_end) {
-        setStatus('expired');
-        return;
-      }
+      if (profile.stripe_status === 'active' && profile.subscription_end) {
+        const now = new Date();
+        const end = new Date(profile.subscription_end);
+        const diffDays = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        setDaysUntilExpiry(diffDays);
 
-      const now = new Date();
-      const end = new Date(data.subscription_end);
-      const diffMs = end.getTime() - now.getTime();
-      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-      setDaysUntilExpiry(diffDays);
-
-      if (diffDays <= 0) {
-        setStatus('expired');
-      } else if (diffDays <= 30) {
-        setStatus('expiring');
+        if (diffDays <= 0) {
+          setStatus('inactive');
+        } else if (diffDays <= 30) {
+          setStatus('expiring');
+        } else {
+          setStatus('active');
+        }
       } else {
-        setStatus('active');
+        setStatus('inactive');
       }
     } catch {
-      setStatus('new');
+      setStatus('inactive');
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   // Handle checkout return
   useEffect(() => {
@@ -76,19 +78,11 @@ export function useSubscription() {
     const sessionId = params.get('session_id');
 
     if (checkoutStatus === 'success' && sessionId) {
-      // Clean URL
       window.history.replaceState({}, '', '/');
-      
-      // Verify checkout session
       supabase.functions.invoke('verify-checkout', {
         body: { session_id: sessionId },
-      }).then(({ data, error }) => {
-        if (!error && data?.ok) {
-          localStorage.setItem('magicmart_profile_id', data.profile_id);
-          localStorage.setItem('magicmart_email', data.email);
-          localStorage.setItem('magicmart_name', data.display_name);
-          checkSubscription();
-        }
+      }).then(() => {
+        checkSubscription();
       });
     } else if (checkoutStatus === 'cancel') {
       window.history.replaceState({}, '', '/');
@@ -101,10 +95,7 @@ export function useSubscription() {
 
   const openCheckout = async () => {
     try {
-      const email = localStorage.getItem('magicmart_email');
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: email ? { email } : {},
-      });
+      const { data, error } = await supabase.functions.invoke('create-checkout');
       if (error) throw error;
       if (data?.url) window.location.href = data.url;
     } catch (err: any) {
@@ -114,11 +105,7 @@ export function useSubscription() {
 
   const openPortal = async () => {
     try {
-      const email = localStorage.getItem('magicmart_email');
-      if (!email) return;
-      const { data, error } = await supabase.functions.invoke('customer-portal', {
-        body: { email },
-      });
+      const { data, error } = await supabase.functions.invoke('customer-portal');
       if (error) throw error;
       if (data?.url) window.open(data.url, '_blank');
     } catch (err: any) {
@@ -126,5 +113,5 @@ export function useSubscription() {
     }
   };
 
-  return { status, profile, daysUntilExpiry, openCheckout, openPortal, refresh: checkSubscription };
+  return { status, loading, info, daysUntilExpiry, openCheckout, openPortal, refresh: checkSubscription };
 }

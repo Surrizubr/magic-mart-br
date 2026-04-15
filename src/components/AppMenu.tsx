@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Palette, Globe, Settings, Info, RotateCcw, Sun, Moon, Type, ChevronRight, ArrowLeft, Check, Key, ClipboardPaste, Save, HelpCircle, CreditCard, RefreshCw, Undo2 } from 'lucide-react';
+import { X, Palette, Globe, Settings, Info, RotateCcw, Sun, Moon, Type, ChevronRight, ArrowLeft, Check, Key, ClipboardPaste, Save, HelpCircle, CreditCard, RefreshCw, Undo2, LogOut } from 'lucide-react';
 import { useTheme, ThemeMode } from '@/contexts/ThemeContext';
 import { useLanguage, Lang } from '@/contexts/LanguageContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { supabase } from '@/integrations/supabase/client';
 import { resetAllData } from '@/data/mockData';
 import { toast } from 'sonner';
 import {
@@ -332,6 +333,17 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
                       <div className="text-left flex-1">
                         <p className="text-sm font-medium text-destructive">{t('resetAll')}</p>
                         <p className="text-xs text-muted-foreground">{t('resetDesc')}</p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={async () => { await supabase.auth.signOut(); onClose(); }}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:bg-accent transition-colors"
+                    >
+                      <LogOut className="w-5 h-5 text-muted-foreground" />
+                      <div className="text-left flex-1">
+                        <p className="text-sm font-medium text-foreground">{t('logout')}</p>
+                        <p className="text-xs text-muted-foreground">{t('logoutDesc')}</p>
                       </div>
                     </button>
                   </div>

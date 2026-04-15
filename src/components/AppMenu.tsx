@@ -38,14 +38,14 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
   // Check if within 30 days of subscription start (for refund eligibility)
   const [canRefund, setCanRefund] = useState(false);
   useEffect(() => {
-    if (profile?.subscription_end) {
-      const end = new Date(profile.subscription_end);
+    if (info?.subscription_end) {
+      const end = new Date(info.subscription_end);
       const start = new Date(end);
       start.setFullYear(start.getFullYear() - 1);
       const daysSinceStart = Math.floor((Date.now() - start.getTime()) / (1000 * 60 * 60 * 24));
       setCanRefund(daysSinceStart <= 30);
     }
-  }, [profile]);
+  }, [info]);
 
   const handleReset = () => {
     resetAllData();
@@ -291,10 +291,10 @@ export function AppMenu({ open, onClose }: AppMenuProps) {
                 </div>
 
                 {/* User info at the top */}
-                {!subMenu && profile && (
+                {!subMenu && info && (
                   <div className="mb-4 p-3 rounded-xl bg-card border border-border">
-                    <p className="text-sm font-bold text-foreground">{profile.display_name}</p>
-                    <p className="text-xs text-muted-foreground">{profile.email}</p>
+                    <p className="text-sm font-bold text-foreground">{info.display_name}</p>
+                    <p className="text-xs text-muted-foreground">{info.email}</p>
                   </div>
                 )}
 

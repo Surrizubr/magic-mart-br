@@ -17,21 +17,34 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
-    // Get authenticated user
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Not authenticated");
+    if (!authHeader?.startsWith("Bearer ")) throw new Error("Not authenticated");
 
-    const token = authHeader.replace("Bearer ", "");
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
-    if (authError || !user?.email) throw new Error("Not authenticated");
+    // Use getClaims for signing-keys compatibility
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("getClaims failed, falling back to getUser", claimsError?.message);
+      // Fallback to getUser
+      const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+      if (authError || !user?.email) throw new Error("Not authenticated");
+      var userEmail = user.email;
+    } else {
+      userEmail = claimsData.claims.email as string;
+      if (!userEmail) throw new Error("No email in claims");
+    }
+
+    console.log("Authenticated user:", userEmail);
 
     // Check if customer already exists
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
     let customerId: string | undefined;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
@@ -41,7 +54,7 @@ serve(async (req) => {
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+      customer_email: customerId ? undefined : userEmail,
       line_items: [{ price: "price_1TKgePRsLFesxj6Xo0fLdtGA", quantity: 1 }],
       mode: "subscription",
       success_url: `${origin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
@@ -53,6 +66,7 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    console.error("create-checkout error:", (error as Error).message);
     return new Response(JSON.stringify({ error: (error as Error).message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

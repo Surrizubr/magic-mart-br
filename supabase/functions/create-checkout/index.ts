@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const LIVE_PRICE_ID = "price_1TKgePRsLFesxj6Xo0fLdtGA";
-const TEST_PRICE_ID = "price_1TPP1vRsLFesxj6Xt2xG4LrA";
+const TEST_PRICE_ID = "price_1TMeFZRsLFesxj6XP8uecvEE";
 
 function resolveCheckoutPriceId(secretKey: string) {
   if (!secretKey) {

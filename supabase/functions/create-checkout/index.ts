@@ -7,13 +7,35 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const LIVE_PRICE_ID = "price_1TKgePRsLFesxj6Xo0fLdtGA";
+const TEST_PRICE_ID = "price_1TPP1vRsLFesxj6Xt2xG4LrA";
+
+function resolveCheckoutPriceId(secretKey: string) {
+  if (!secretKey) {
+    throw new Error("STRIPE_SECRET_KEY is not set");
+  }
+
+  if (secretKey.startsWith("sk_test_")) {
+    return TEST_PRICE_ID;
+  }
+
+  if (secretKey.startsWith("sk_live_")) {
+    return LIVE_PRICE_ID;
+  }
+
+  throw new Error("Invalid STRIPE_SECRET_KEY format");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") || "";
+    const priceId = resolveCheckoutPriceId(stripeKey);
+
+    const stripe = new Stripe(stripeKey, {
       apiVersion: "2025-08-27.basil",
     });
 
@@ -55,7 +77,7 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : userEmail,
-      line_items: [{ price: "price_1TKgePRsLFesxj6Xo0fLdtGA", quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       success_url: `${origin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?checkout=cancel`,

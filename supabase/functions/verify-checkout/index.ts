@@ -7,6 +7,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const log = (step: string, details?: any) => {
+  const d = details ? ` - ${JSON.stringify(details)}` : "";
+  console.log(`[VERIFY-CHECKOUT] ${step}${d}`);
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -16,6 +21,34 @@ serve(async (req) => {
     const { session_id } = await req.json();
     if (!session_id) throw new Error("session_id is required");
 
+    // Identify the authenticated user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) throw new Error("Not authenticated");
+    const token = authHeader.replace("Bearer ", "");
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    let userId: string | null = null;
+    let userEmail: string | null = null;
+    try {
+      const { data: claimsData } = await supabaseClient.auth.getClaims(token);
+      if (claimsData?.claims) {
+        userId = claimsData.claims.sub as string;
+        userEmail = claimsData.claims.email as string;
+      }
+    } catch (_) {}
+    if (!userId) {
+      const { data: { user } } = await supabaseClient.auth.getUser(token);
+      if (!user) throw new Error("Not authenticated");
+      userId = user.id;
+      userEmail = user.email ?? null;
+    }
+    log("Authenticated", { userId, userEmail });
+
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
@@ -23,6 +56,7 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.retrieve(session_id, {
       expand: ["customer", "subscription"],
     });
+    log("Session retrieved", { status: session.payment_status, mode: session.mode });
 
     if (session.payment_status !== "paid") {
       return new Response(JSON.stringify({ ok: false, error: "Payment not completed" }), {
@@ -31,13 +65,11 @@ serve(async (req) => {
       });
     }
 
-    const customerEmail = session.customer_details?.email || session.customer_email || "";
-    const customerName = session.customer_details?.name || "";
-    const firstName = customerName.split(" ")[0] || customerEmail.split("@")[0];
-
-    // Calculate subscription_end: 1 year from now
-    const subscriptionEnd = new Date();
-    subscriptionEnd.setFullYear(subscriptionEnd.getFullYear() + 1);
+    const customerId = (session.customer as Stripe.Customer)?.id || (session.customer as string);
+    const subscription = session.subscription as Stripe.Subscription | null;
+    const subscriptionEnd = subscription?.current_period_end
+      ? new Date(subscription.current_period_end * 1000).toISOString()
+      : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -45,53 +77,34 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Check if profile exists for this email
-    const { data: existing } = await supabaseAdmin
+    const { error: updateError } = await supabaseAdmin
       .from("profiles")
-      .select("id")
-      .eq("user_id", customerEmail)
-      .maybeSingle();
+      .update({
+        stripe_status: "active",
+        stripe_customer_id: customerId,
+        subscription_end: subscriptionEnd,
+      })
+      .eq("user_id", userId);
 
-    let profileId: string;
-
-    if (existing) {
-      // Update existing profile
-      await supabaseAdmin
-        .from("profiles")
-        .update({
-          display_name: firstName,
-          subscription_end: subscriptionEnd.toISOString(),
-        })
-        .eq("id", existing.id);
-      profileId = existing.id;
-    } else {
-      // Create new profile
-      const { data: newProfile, error } = await supabaseAdmin
-        .from("profiles")
-        .insert({
-          user_id: customerEmail,
-          display_name: firstName,
-          subscription_end: subscriptionEnd.toISOString(),
-        })
-        .select("id")
-        .single();
-
-      if (error) throw error;
-      profileId = newProfile.id;
+    if (updateError) {
+      log("Update error", { error: updateError.message });
+      throw updateError;
     }
+    log("Profile updated", { userId, subscriptionEnd });
 
-    return new Response(JSON.stringify({
-      ok: true,
-      profile_id: profileId,
-      email: customerEmail,
-      display_name: firstName,
-      subscription_end: subscriptionEnd.toISOString(),
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        user_id: userId,
+        email: userEmail,
+        subscription_end: subscriptionEnd,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+    );
   } catch (error) {
-    return new Response(JSON.stringify({ ok: false, error: (error as Error).message }), {
+    const msg = (error as Error).message;
+    log("ERROR", { message: msg });
+    return new Response(JSON.stringify({ ok: false, error: msg }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

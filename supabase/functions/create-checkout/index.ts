@@ -50,6 +50,8 @@ serve(async (req) => {
 
     // Use getClaims for signing-keys compatibility
     const token = authHeader.replace("Bearer ", "");
+    let userEmail: string | undefined;
+    let userId: string | undefined;
     const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
     
     if (claimsError || !claimsData?.claims) {
@@ -57,13 +59,17 @@ serve(async (req) => {
       // Fallback to getUser
       const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
       if (authError || !user?.email) throw new Error("Not authenticated");
-      var userEmail = user.email;
+      userEmail = user.email;
+      userId = user.id;
     } else {
       userEmail = claimsData.claims.email as string;
+      userId = claimsData.claims.sub as string;
       if (!userEmail) throw new Error("No email in claims");
     }
 
-    console.log("Authenticated user:", userEmail);
+    if (!userId) throw new Error("No user id in token");
+
+    console.log("Authenticated user:", userEmail, userId);
 
     // Check if customer already exists
     const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
@@ -77,6 +83,17 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : userEmail,
+      client_reference_id: userId,
+      metadata: {
+        user_id: userId,
+        user_email: userEmail,
+      },
+      subscription_data: {
+        metadata: {
+          user_id: userId,
+          user_email: userEmail,
+        },
+      },
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       success_url: `${origin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,

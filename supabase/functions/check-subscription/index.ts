@@ -12,6 +12,8 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing"]);
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -30,56 +32,123 @@ serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
 
-    // Use anon key client with the user's auth header to validate via getClaims
-    const supabaseClient = createClient(
+    const supabaseAuthClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      throw new Error("Unauthorized: invalid token");
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    let email: string | null = null;
+    let userId: string | null = null;
+
+    const { data: claimsData, error: claimsError } = await supabaseAuthClient.auth.getClaims(token);
+    if (!claimsError && claimsData?.claims) {
+      email = (claimsData.claims.email as string) ?? null;
+      userId = (claimsData.claims.sub as string) ?? null;
+    } else {
+      const { data: userData, error: userError } = await supabaseAuthClient.auth.getUser(token);
+      if (userError || !userData.user) {
+        throw new Error("Unauthorized: invalid token");
+      }
+
+      email = userData.user.email ?? null;
+      userId = userData.user.id;
     }
 
-    const email = claimsData.claims.email as string;
-    const userId = claimsData.claims.sub as string;
     if (!email) throw new Error("User email not available in token");
     logStep("User authenticated", { userId, email });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email, limit: 1 });
 
-    if (customers.data.length === 0) {
-      logStep("No customer found");
-      return new Response(JSON.stringify({ subscribed: false }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
+    let stripeStatus = "inactive";
+    let customerId: string | null = null;
+    let productId: string | null = null;
+    let subscriptionEnd: string | null = null;
+
+    if (customers.data.length > 0) {
+      customerId = customers.data[0].id;
+      logStep("Found Stripe customer", { customerId });
+
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "all",
+        limit: 10,
       });
+
+      const activeSubscription = subscriptions.data.find((subscription) =>
+        ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status)
+      );
+
+      if (activeSubscription) {
+        stripeStatus = "active";
+        subscriptionEnd = new Date(activeSubscription.current_period_end * 1000).toISOString();
+
+        const rawProduct = activeSubscription.items.data[0]?.price.product;
+        productId = typeof rawProduct === "string"
+          ? rawProduct
+          : rawProduct?.id ?? null;
+
+        logStep("Active subscription found", {
+          customerId,
+          subscriptionId: activeSubscription.id,
+          subscriptionEnd,
+          productId,
+        });
+      } else {
+        logStep("No active subscription found", { customerId, subscriptions: subscriptions.data.length });
+      }
+    } else {
+      logStep("No customer found");
     }
 
-    const customerId = customers.data[0].id;
-    logStep("Found Stripe customer", { customerId });
+    const profilePayload = {
+      stripe_status: stripeStatus,
+      stripe_customer_id: customerId,
+      subscription_end: subscriptionEnd,
+    };
 
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "active",
-      limit: 1,
-    });
+    const { data: existingProfiles, error: profileLookupError } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("user_id", userId)
+      .limit(1);
 
-    const hasActiveSub = subscriptions.data.length > 0;
-    let productId = null;
-    let subscriptionEnd = null;
-
-    if (hasActiveSub) {
-      const subscription = subscriptions.data[0];
-      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      productId = subscription.items.data[0].price.product;
-      logStep("Active subscription found", { subscriptionEnd, productId });
+    if (profileLookupError) {
+      throw profileLookupError;
     }
+
+    if (existingProfiles && existingProfiles.length > 0) {
+      const { error: updateError } = await supabaseAdmin
+        .from("profiles")
+        .update(profilePayload)
+        .eq("user_id", userId);
+
+      if (updateError) throw updateError;
+    } else {
+      const { error: insertError } = await supabaseAdmin
+        .from("profiles")
+        .insert({
+          user_id: userId,
+          display_name: email.split("@")[0],
+          ...profilePayload,
+        });
+
+      if (insertError) throw insertError;
+    }
+
+    logStep("Profile synced", { userId, stripeStatus, customerId, subscriptionEnd });
 
     return new Response(JSON.stringify({
-      subscribed: hasActiveSub,
+      subscribed: stripeStatus === "active",
+      stripe_status: stripeStatus,
+      customer_id: customerId,
       product_id: productId,
       subscription_end: subscriptionEnd,
     }), {

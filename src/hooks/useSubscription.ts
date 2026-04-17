@@ -71,23 +71,41 @@ export function useSubscription() {
     }
   }, [user]);
 
-  // Handle checkout return
+  // Handle checkout return — verify, then poll until profile shows active
   useEffect(() => {
+    if (!user) return;
     const params = new URLSearchParams(window.location.search);
     const checkoutStatus = params.get('checkout');
     const sessionId = params.get('session_id');
 
     if (checkoutStatus === 'success' && sessionId) {
       window.history.replaceState({}, '', '/');
-      supabase.functions.invoke('verify-checkout', {
-        body: { session_id: sessionId },
-      }).then(() => {
-        checkSubscription();
-      });
+      (async () => {
+        setLoading(true);
+        try {
+          await supabase.functions.invoke('verify-checkout', {
+            body: { session_id: sessionId },
+          });
+        } catch (e) {
+          console.error('verify-checkout failed', e);
+        }
+
+        // Poll up to 10x (20s) until stripe_status === 'active'
+        for (let i = 0; i < 10; i++) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('stripe_status')
+            .eq('user_id', user.id)
+            .single();
+          if ((data as any)?.stripe_status === 'active') break;
+          await new Promise((r) => setTimeout(r, 2000));
+        }
+        await checkSubscription();
+      })();
     } else if (checkoutStatus === 'cancel') {
       window.history.replaceState({}, '', '/');
     }
-  }, [checkSubscription]);
+  }, [checkSubscription, user]);
 
   useEffect(() => {
     checkSubscription();

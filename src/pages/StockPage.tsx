@@ -160,8 +160,10 @@ export function StockPage({ onBack }: StockPageProps) {
         <div className="space-y-3">
           {filtered.map((s, i) => {
             const cfg = statusConfig[s.status];
-            const daysLeft = s.daily_consumption_rate > 0 ? Math.ceil(s.quantity / s.daily_consumption_rate) : 99;
+            const daysLeft = computeDaysLeft(s);
+            const sincePurchase = daysSincePurchase(s);
             const emoji = categoryIcons[s.category] || '🛒';
+            const daysColor = daysLeft <= 3 ? 'text-destructive' : daysLeft <= 7 ? 'text-warning' : 'text-muted-foreground';
             return (
               <SwipeableRow
                 key={s.id}
@@ -192,12 +194,16 @@ export function StockPage({ onBack }: StockPageProps) {
                         </span>
                         <span className="text-xs text-muted-foreground">{s.quantity} {s.unit}</span>
                       </div>
-                      <p className="text-[11px] text-muted-foreground mt-1">· comprado 0d atrás</p>
-                      <p className="text-[11px] font-medium text-warning mt-0.5">· ~{daysLeft}d restantes</p>
-                      {(s as any).learned_consumption && (
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        · comprado {sincePurchase !== null ? `${sincePurchase}d` : '—'} atrás
+                      </p>
+                      <p className={`text-[11px] font-medium mt-0.5 ${daysColor}`}>
+                        · ~{daysLeft}d restantes
+                      </p>
+                      {s.learned_consumption && (
                         <p className="text-[10px] text-primary mt-0.5 flex items-center gap-1">
                           <Sparkles className="w-3 h-3" />
-                          Consumo aprendido ({(s as any).purchase_count} compras, ~{(s as any).avg_duration_days}d por ciclo)
+                          Consumo aprendido ({s.purchase_count} compras, ~{s.avg_duration_days}d por ciclo)
                         </p>
                       )}
                     </div>

@@ -5,6 +5,7 @@ import { getStock } from '@/data/mockData';
 import { Plus, Minus, Search, Pencil, ShoppingCart, Sparkles } from 'lucide-react';
 import { StockItem } from '@/types';
 import { recalculateAllConsumptionRates } from '@/lib/consumptionCalculator';
+import { computeDaysLeft, deriveStatus, refreshStockStatuses, syncLastPurchaseDates, daysSincePurchase, sortByCriticality } from '@/lib/stockHelpers';
 import { SwipeableRow } from '@/components/SwipeableRow';
 import { addToReminderList } from '@/lib/reminderList';
 import { toast } from 'sonner';
@@ -36,7 +37,9 @@ export function StockPage({ onBack }: StockPageProps) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [stock, setStock] = useState<StockItem[]>(() => {
+    syncLastPurchaseDates();
     recalculateAllConsumptionRates();
+    refreshStockStatuses();
     return getStock();
   });
   const [editingQtyId, setEditingQtyId] = useState<string | null>(null);
@@ -45,9 +48,10 @@ export function StockPage({ onBack }: StockPageProps) {
 
   const handleAddItem = (item: AddStockItemResult) => {
     const { price, ...stockItem } = item;
-    setStock(prev => [stockItem, ...prev]);
+    const today = new Date().toISOString().split('T')[0];
+    const enriched: StockItem = { ...stockItem, last_purchase_date: today };
 
-    // Add to purchase history
+    // Add to purchase history first so the calculator sees it
     const qty = stockItem.quantity || 1;
     const historyEntry: PurchaseHistory = {
       id: crypto.randomUUID(),
@@ -57,11 +61,18 @@ export function StockPage({ onBack }: StockPageProps) {
       price: qty > 0 ? price / qty : price,
       total_price: price,
       store_name: 'Entrada Manual',
-      purchase_date: new Date().toISOString().split('T')[0],
+      purchase_date: today,
     };
     const history = getHistory();
     history.unshift(historyEntry);
     localStorage.setItem('purchase_history', JSON.stringify(history));
+
+    const updated = [enriched, ...stock];
+    localStorage.setItem('stock_items', JSON.stringify(updated));
+    syncLastPurchaseDates();
+    recalculateAllConsumptionRates();
+    refreshStockStatuses();
+    setStock(getStock());
 
     toast.success('Produto adicionado ao estoque!');
   };

@@ -81,7 +81,8 @@ export function StockPage({ onBack }: StockPageProps) {
     localStorage.setItem('stock_items', JSON.stringify(stock));
   }, [stock]);
 
-  const filtered = stock.filter(s => {
+  // Recompute status on the fly and sort by criticality (least days left first)
+  const filtered = sortByCriticality(stock.map(s => ({ ...s, status: deriveStatus(s) }))).filter(s => {
     if (search && !s.product_name.toLowerCase().includes(search.toLowerCase()) &&
         !s.category.toLowerCase().includes(search.toLowerCase())) return false;
     if (filter !== 'all' && s.status !== filter) return false;

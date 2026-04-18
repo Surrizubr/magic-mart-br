@@ -45,8 +45,14 @@ interface ScannerPageProps {
 
 export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: ScannerPageProps) {
   const { currency, formatCurrency: fc, t } = useLanguage();
-  const [mode, setMode] = useState<ScanMode>('choose');
+  const [mode, setMode] = useState<ScanMode>(() => (sessionStorage.getItem('scanner_mode') as ScanMode) || 'choose');
   const [step, setStep] = useState<ScanStep>('capture');
+
+  // Persist mode across mobile camera remounts
+  useEffect(() => {
+    if (mode === 'choose') sessionStorage.removeItem('scanner_mode');
+    else sessionStorage.setItem('scanner_mode', mode);
+  }, [mode]);
   const [images, setImages] = useState<string[]>([]);
   const [progressMsg, setProgressMsg] = useState('');
   const [progressPercent, setProgressPercent] = useState(0);

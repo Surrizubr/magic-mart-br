@@ -72,21 +72,31 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const dataUrl = ev.target?.result as string;
-        setImages(prev => {
-          const next = [...prev, dataUrl];
-          if (mode === 'single') {
-            processImages([dataUrl]);
-          }
-          return next;
-        });
-      };
-      reader.readAsDataURL(file);
+    if (!files || files.length === 0) return;
+
+    const fileArray = Array.from(files);
+    const readers = fileArray.map(file => {
+      return new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target?.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
     });
+
+    Promise.all(readers)
+      .then(dataUrls => {
+        setImages(prev => [...prev, ...dataUrls]);
+        // Auto-process in single mode
+        if (mode === 'single') {
+          processImages(dataUrls);
+        }
+      })
+      .catch(err => {
+        console.error('Erro ao ler arquivo:', err);
+        setError('Erro ao ler imagem. Tente novamente.');
+      });
+
     e.target.value = '';
   }, [mode]);
 

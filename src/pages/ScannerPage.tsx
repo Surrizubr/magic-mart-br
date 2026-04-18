@@ -414,6 +414,50 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
               </p>
             </div>
           </motion.button>
+
+          {/* AI Scanner Info Banner */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-accent/30 rounded-lg p-4 space-y-2"
+          >
+            <div className="flex items-start gap-2">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                <span className="text-xs font-bold text-primary">AI</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">
+                  Scanner com Inteligência Artificial
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  O escâner utiliza IA para detectar e extrair texto dos cupons fiscais automaticamente. Para funcionar, é necessária uma chave API do Gemini, que pode ser obtida gratuitamente.
+                </p>
+              </div>
+            </div>
+
+            <div className="border-t border-border/50 pt-3 mt-2">
+              <p className="text-xs font-semibold text-foreground mb-2">
+                Como obter sua chave API gratuita:
+              </p>
+              <ol className="text-xs text-muted-foreground space-y-1.5 pl-4 list-decimal">
+                <li>Acesse <span className="font-mono text-primary">aistudio.google.com</span></li>
+                <li>Faça login com sua conta Google</li>
+                <li>No menu lateral, clique em <span className="font-semibold text-foreground">"Get API Key"</span></li>
+                <li>Clique em <span className="font-semibold text-foreground">"Create API Key"</span></li>
+                <li>Copie a chave gerada</li>
+                <li>
+                  Cole a chave em:{' '}
+                  <button
+                    onClick={onOpenMenu}
+                    className="text-primary font-semibold underline underline-offset-2 hover:opacity-80 transition-opacity inline"
+                  >
+                    Menu → Configurações → Chave API Gemini
+                  </button>
+                </li>
+              </ol>
+            </div>
+          </motion.div>
         </div>
       </div>
     );

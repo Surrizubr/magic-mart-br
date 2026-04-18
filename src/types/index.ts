@@ -33,6 +33,10 @@ export interface StockItem {
   daily_consumption_rate: number;
   status: 'ok' | 'low' | 'critical' | 'expired';
   last_price: number;
+  last_purchase_date?: string;
+  learned_consumption?: boolean;
+  purchase_count?: number;
+  avg_duration_days?: number | null;
 }
 
 export interface PurchaseHistory {

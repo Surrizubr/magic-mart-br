@@ -67,6 +67,12 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
 
   const handleAddAlertToReminder = (s: StockItem) => {
     addToReminderList({ product_name: s.product_name, category: s.category, unit: s.unit, last_price: s.last_price });
+    setStockState(prev => {
+      const updated = prev.filter(x => x.id !== s.id);
+      localStorage.setItem('stock_items', JSON.stringify(updated));
+      return updated;
+    });
+    toast.success('Adicionado à lista de compras.');
   };
   const today = new Date();
   const dateStr = today.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });

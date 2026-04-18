@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/PageHeader';
@@ -45,8 +45,14 @@ interface ScannerPageProps {
 
 export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: ScannerPageProps) {
   const { currency, formatCurrency: fc, t } = useLanguage();
-  const [mode, setMode] = useState<ScanMode>('choose');
+  const [mode, setMode] = useState<ScanMode>(() => (sessionStorage.getItem('scanner_mode') as ScanMode) || 'choose');
   const [step, setStep] = useState<ScanStep>('capture');
+
+  // Persist mode across mobile camera remounts
+  useEffect(() => {
+    if (mode === 'choose') sessionStorage.removeItem('scanner_mode');
+    else sessionStorage.setItem('scanner_mode', mode);
+  }, [mode]);
   const [images, setImages] = useState<string[]>([]);
   const [progressMsg, setProgressMsg] = useState('');
   const [progressPercent, setProgressPercent] = useState(0);
@@ -72,21 +78,31 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const dataUrl = ev.target?.result as string;
-        setImages(prev => {
-          const next = [...prev, dataUrl];
-          if (mode === 'single') {
-            processImages([dataUrl]);
-          }
-          return next;
-        });
-      };
-      reader.readAsDataURL(file);
+    if (!files || files.length === 0) return;
+
+    const fileArray = Array.from(files);
+    const readers = fileArray.map(file => {
+      return new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target?.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
     });
+
+    Promise.all(readers)
+      .then(dataUrls => {
+        setImages(prev => [...prev, ...dataUrls]);
+        // Auto-process in single mode
+        if (mode === 'single') {
+          processImages(dataUrls);
+        }
+      })
+      .catch(err => {
+        console.error('Erro ao ler arquivo:', err);
+        setError('Erro ao ler imagem. Tente novamente.');
+      });
+
     e.target.value = '';
   }, [mode]);
 

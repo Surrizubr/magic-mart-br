@@ -62,10 +62,22 @@ export function recalculateAllConsumptionRates(): void {
   const stock = JSON.parse(localStorage.getItem('stock_items') || '[]');
   const history: PurchaseHistory[] = JSON.parse(localStorage.getItem('purchase_history') || '[]');
 
-  if (stock.length === 0 || history.length === 0) return;
+  if (stock.length === 0) return;
 
   let changed = false;
   stock.forEach((item: any) => {
+    // Update last_purchase_date from history
+    const matches = history
+      .filter(h => h.product_name.toLowerCase() === item.product_name.toLowerCase())
+      .map(h => h.purchase_date)
+      .sort()
+      .reverse();
+    if (matches.length > 0 && item.last_purchase_date !== matches[0]) {
+      item.last_purchase_date = matches[0];
+      changed = true;
+    }
+
+    // Learn consumption rate when we have 2+ purchases
     const result = calculateConsumptionRate(item.product_name, history);
     if (result.purchaseCount >= 2) {
       item.daily_consumption_rate = result.rate;

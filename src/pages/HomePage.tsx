@@ -29,11 +29,11 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
   const [stockState, setStockState] = useState<StockItem[]>(() => getStock());
   const [listsState, setListsState] = useState<ShoppingList[]>(() => getLists());
   const history = getHistory();
-  // Sort by criticality (least days left first), include all critical/low items
+  // Sort by criticality (least days left first), only items with <= 3 days
   const criticalStock = sortByCriticality(
     stockState
       .map(s => ({ ...s, status: deriveStatus(s) }))
-      .filter(s => s.status === 'critical' || s.status === 'low')
+      .filter(s => s.status === 'critical')
   );
   const activeLists = listsState.filter(l => l.status === 'active' || l.status === 'shopping');
   const totalMonth = history.reduce((sum, h) => sum + h.total_price, 0);

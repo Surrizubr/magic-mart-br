@@ -6,6 +6,7 @@ import { TabId, ShoppingList, StockItem } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { SwipeableRow } from '@/components/SwipeableRow';
 import { addToReminderList } from '@/lib/reminderList';
+import { computeDaysLeft, deriveStatus, sortByCriticality } from '@/lib/stockHelpers';
 import { toast } from 'sonner';
 
 interface HomePageProps {
@@ -28,7 +29,12 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
   const [stockState, setStockState] = useState<StockItem[]>(() => getStock());
   const [listsState, setListsState] = useState<ShoppingList[]>(() => getLists());
   const history = getHistory();
-  const criticalStock = stockState.filter(s => s.status === 'critical' || s.status === 'low');
+  // Sort by criticality (least days left first), include all critical/low items
+  const criticalStock = sortByCriticality(
+    stockState
+      .map(s => ({ ...s, status: deriveStatus(s) }))
+      .filter(s => s.status === 'critical' || s.status === 'low')
+  );
   const activeLists = listsState.filter(l => l.status === 'active' || l.status === 'shopping');
   const totalMonth = history.reduce((sum, h) => sum + h.total_price, 0);
 
@@ -225,7 +231,8 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
           ) : (
             <div className="max-h-[280px] overflow-y-auto pr-1 space-y-2" style={{ scrollbarWidth: 'thin' }}>
               {criticalStock.slice(0, 5).map(s => {
-                const daysLeft = s.daily_consumption_rate > 0 ? Math.ceil(s.quantity / s.daily_consumption_rate) : 99;
+                const daysLeft = computeDaysLeft(s);
+                const isCritical = daysLeft <= 3;
                 return (
                   <SwipeableRow
                     key={s.id}
@@ -235,12 +242,12 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
                   >
                     <div className="bg-card rounded-xl border border-border p-4">
                       <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-warning/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <AlertTriangle className="w-4 h-4 text-warning" />
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${isCritical ? 'bg-destructive/10' : 'bg-warning/10'}`}>
+                          <AlertTriangle className={`w-4 h-4 ${isCritical ? 'text-destructive' : 'text-warning'}`} />
                         </div>
                         <div>
                           <p className="text-sm font-bold text-foreground uppercase">{s.product_name}</p>
-                          <p className="text-xs font-semibold text-warning">~{daysLeft} dias restantes</p>
+                          <p className={`text-xs font-semibold ${isCritical ? 'text-destructive' : 'text-warning'}`}>~{daysLeft} dias restantes</p>
                           <p className="text-xs text-muted-foreground">Estoque: {s.quantity} {s.unit}</p>
                         </div>
                       </div>

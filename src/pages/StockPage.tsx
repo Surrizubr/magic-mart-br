@@ -5,6 +5,7 @@ import { getStock } from '@/data/mockData';
 import { Plus, Minus, Search, Pencil, ShoppingCart, Sparkles } from 'lucide-react';
 import { StockItem } from '@/types';
 import { recalculateAllConsumptionRates } from '@/lib/consumptionCalculator';
+import { computeDaysLeft, deriveStatus, refreshStockStatuses, syncLastPurchaseDates, daysSincePurchase, sortByCriticality } from '@/lib/stockHelpers';
 import { SwipeableRow } from '@/components/SwipeableRow';
 import { addToReminderList } from '@/lib/reminderList';
 import { toast } from 'sonner';
@@ -36,7 +37,9 @@ export function StockPage({ onBack }: StockPageProps) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [stock, setStock] = useState<StockItem[]>(() => {
+    syncLastPurchaseDates();
     recalculateAllConsumptionRates();
+    refreshStockStatuses();
     return getStock();
   });
   const [editingQtyId, setEditingQtyId] = useState<string | null>(null);
@@ -45,9 +48,10 @@ export function StockPage({ onBack }: StockPageProps) {
 
   const handleAddItem = (item: AddStockItemResult) => {
     const { price, ...stockItem } = item;
-    setStock(prev => [stockItem, ...prev]);
+    const today = new Date().toISOString().split('T')[0];
+    const enriched: StockItem = { ...stockItem, last_purchase_date: today };
 
-    // Add to purchase history
+    // Add to purchase history first so the calculator sees it
     const qty = stockItem.quantity || 1;
     const historyEntry: PurchaseHistory = {
       id: crypto.randomUUID(),
@@ -57,11 +61,18 @@ export function StockPage({ onBack }: StockPageProps) {
       price: qty > 0 ? price / qty : price,
       total_price: price,
       store_name: 'Entrada Manual',
-      purchase_date: new Date().toISOString().split('T')[0],
+      purchase_date: today,
     };
     const history = getHistory();
     history.unshift(historyEntry);
     localStorage.setItem('purchase_history', JSON.stringify(history));
+
+    const updated = [enriched, ...stock];
+    localStorage.setItem('stock_items', JSON.stringify(updated));
+    syncLastPurchaseDates();
+    recalculateAllConsumptionRates();
+    refreshStockStatuses();
+    setStock(getStock());
 
     toast.success('Produto adicionado ao estoque!');
   };
@@ -70,7 +81,8 @@ export function StockPage({ onBack }: StockPageProps) {
     localStorage.setItem('stock_items', JSON.stringify(stock));
   }, [stock]);
 
-  const filtered = stock.filter(s => {
+  // Recompute status on the fly and sort by criticality (least days left first)
+  const filtered = sortByCriticality(stock.map(s => ({ ...s, status: deriveStatus(s) }))).filter(s => {
     if (search && !s.product_name.toLowerCase().includes(search.toLowerCase()) &&
         !s.category.toLowerCase().includes(search.toLowerCase())) return false;
     if (filter !== 'all' && s.status !== filter) return false;
@@ -148,8 +160,10 @@ export function StockPage({ onBack }: StockPageProps) {
         <div className="space-y-3">
           {filtered.map((s, i) => {
             const cfg = statusConfig[s.status];
-            const daysLeft = s.daily_consumption_rate > 0 ? Math.ceil(s.quantity / s.daily_consumption_rate) : 99;
+            const daysLeft = computeDaysLeft(s);
+            const sincePurchase = daysSincePurchase(s);
             const emoji = categoryIcons[s.category] || '🛒';
+            const daysColor = daysLeft <= 3 ? 'text-destructive' : daysLeft <= 7 ? 'text-warning' : 'text-muted-foreground';
             return (
               <SwipeableRow
                 key={s.id}
@@ -180,12 +194,16 @@ export function StockPage({ onBack }: StockPageProps) {
                         </span>
                         <span className="text-xs text-muted-foreground">{s.quantity} {s.unit}</span>
                       </div>
-                      <p className="text-[11px] text-muted-foreground mt-1">· comprado 0d atrás</p>
-                      <p className="text-[11px] font-medium text-warning mt-0.5">· ~{daysLeft}d restantes</p>
-                      {(s as any).learned_consumption && (
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        · comprado {sincePurchase !== null ? `${sincePurchase}d` : '—'} atrás
+                      </p>
+                      <p className={`text-[11px] font-medium mt-0.5 ${daysColor}`}>
+                        · ~{daysLeft}d restantes
+                      </p>
+                      {s.learned_consumption && (
                         <p className="text-[10px] text-primary mt-0.5 flex items-center gap-1">
                           <Sparkles className="w-3 h-3" />
-                          Consumo aprendido ({(s as any).purchase_count} compras, ~{(s as any).avg_duration_days}d por ciclo)
+                          Consumo aprendido ({s.purchase_count} compras, ~{s.avg_duration_days}d por ciclo)
                         </p>
                       )}
                     </div>

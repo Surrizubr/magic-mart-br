@@ -6,6 +6,7 @@ import { TabId, ShoppingList, StockItem } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { SwipeableRow } from '@/components/SwipeableRow';
 import { addToReminderList } from '@/lib/reminderList';
+import { computeDaysLeft, deriveStatus, sortByCriticality } from '@/lib/stockHelpers';
 import { toast } from 'sonner';
 
 interface HomePageProps {
@@ -225,7 +226,8 @@ export function HomePage({ displayName, onNavigate, onOpenMenu }: HomePageProps)
           ) : (
             <div className="max-h-[280px] overflow-y-auto pr-1 space-y-2" style={{ scrollbarWidth: 'thin' }}>
               {criticalStock.slice(0, 5).map(s => {
-                const daysLeft = s.daily_consumption_rate > 0 ? Math.ceil(s.quantity / s.daily_consumption_rate) : 99;
+                const daysLeft = computeDaysLeft(s);
+                const isCritical = daysLeft <= 3;
                 return (
                   <SwipeableRow
                     key={s.id}

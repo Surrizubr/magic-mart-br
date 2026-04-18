@@ -111,8 +111,12 @@ serve(async (req) => {
           : session.subscription.id;
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const stripeStatus = ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status) ? 'active' : 'inactive';
-        const subscriptionEnd = subscription.current_period_end
-          ? new Date(subscription.current_period_end * 1000).toISOString()
+        const periodEndSec =
+          (subscription as any).current_period_end ??
+          subscription.items.data[0]?.current_period_end ??
+          null;
+        const subscriptionEnd = typeof periodEndSec === 'number' && Number.isFinite(periodEndSec)
+          ? new Date(periodEndSec * 1000).toISOString()
           : null;
 
         await syncProfileSubscription(supabaseAdmin, {
@@ -133,8 +137,12 @@ serve(async (req) => {
       const subscription = event.data.object as Stripe.Subscription;
       const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id;
       const stripeStatus = ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status) ? 'active' : 'inactive';
-      const subscriptionEnd = subscription.current_period_end
-        ? new Date(subscription.current_period_end * 1000).toISOString()
+      const periodEndSec =
+        (subscription as any).current_period_end ??
+        subscription.items.data[0]?.current_period_end ??
+        null;
+      const subscriptionEnd = typeof periodEndSec === 'number' && Number.isFinite(periodEndSec)
+        ? new Date(periodEndSec * 1000).toISOString()
         : null;
       let userId = subscription.metadata?.user_id ?? null;
 

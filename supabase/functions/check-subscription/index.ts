@@ -88,7 +88,13 @@ serve(async (req) => {
 
       if (activeSubscription) {
         stripeStatus = "active";
-        subscriptionEnd = new Date(activeSubscription.current_period_end * 1000).toISOString();
+        const periodEndSec =
+          (activeSubscription as any).current_period_end ??
+          activeSubscription.items.data[0]?.current_period_end ??
+          null;
+        subscriptionEnd = typeof periodEndSec === "number" && Number.isFinite(periodEndSec)
+          ? new Date(periodEndSec * 1000).toISOString()
+          : null;
 
         const rawProduct = activeSubscription.items.data[0]?.price.product;
         productId = typeof rawProduct === "string"

@@ -37,6 +37,28 @@ interface AIReceiptResult {
   notes?: string;
 }
 
+interface PersistedScannerState {
+  mode: ScanMode;
+  step: ScanStep;
+  images: string[];
+  progressMsg: string;
+  progressPercent: number;
+  result: AIReceiptResult | null;
+  saved: boolean;
+  error: string | null;
+}
+
+const SCANNER_SESSION_KEY = 'scanner_session';
+
+function getStoredScannerState(): Partial<PersistedScannerState> {
+  try {
+    const raw = sessionStorage.getItem(SCANNER_SESSION_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
 interface ScannerPageProps {
   onBack?: () => void;
   onNavigateToHistory?: (date: string, store: string) => void;
@@ -45,35 +67,60 @@ interface ScannerPageProps {
 
 export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: ScannerPageProps) {
   const { currency, formatCurrency: fc, t } = useLanguage();
-  const [mode, setMode] = useState<ScanMode>(() => (sessionStorage.getItem('scanner_mode') as ScanMode) || 'choose');
-  const [step, setStep] = useState<ScanStep>('capture');
-
-  // Persist mode across mobile camera remounts
-  useEffect(() => {
-    if (mode === 'choose') sessionStorage.removeItem('scanner_mode');
-    else sessionStorage.setItem('scanner_mode', mode);
-  }, [mode]);
-  const [images, setImages] = useState<string[]>([]);
-  const [progressMsg, setProgressMsg] = useState('');
-  const [progressPercent, setProgressPercent] = useState(0);
+  const storedStateRef = useRef<Partial<PersistedScannerState>>(getStoredScannerState());
+  const storedState = storedStateRef.current;
+  const [mode, setMode] = useState<ScanMode>(() => (storedState.mode as ScanMode) || (sessionStorage.getItem('scanner_mode') as ScanMode) || 'choose');
+  const [step, setStep] = useState<ScanStep>(() => (storedState.step as ScanStep) || 'capture');
+  const [images, setImages] = useState<string[]>(() => storedState.images || []);
+  const [progressMsg, setProgressMsg] = useState(() => storedState.progressMsg || '');
+  const [progressPercent, setProgressPercent] = useState(() => storedState.progressPercent || 0);
   const [dateError, setDateError] = useState(false);
-  const [result, setResult] = useState<AIReceiptResult | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [result, setResult] = useState<AIReceiptResult | null>(() => (storedState.result as AIReceiptResult | null) || null);
+  const [saved, setSaved] = useState(() => storedState.saved || false);
   const [editingItem, setEditingItem] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => storedState.error ?? null);
   const [originalDiscounts, setOriginalDiscounts] = useState<Map<string, { discount_amount: number; discounted_price: number; discount: number }>>(new Map());
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const shouldResumeProcessingRef = useRef(
+    storedState.step === 'processing' && Array.isArray(storedState.images) && storedState.images.length > 0 && !storedState.result
+  );
+
+  useEffect(() => {
+    const shouldClearState = mode === 'choose' && step === 'capture' && images.length === 0 && !result && !error && !saved;
+
+    if (shouldClearState) {
+      sessionStorage.removeItem('scanner_mode');
+      sessionStorage.removeItem(SCANNER_SESSION_KEY);
+      return;
+    }
+
+    sessionStorage.setItem('scanner_mode', mode);
+    sessionStorage.setItem(SCANNER_SESSION_KEY, JSON.stringify({
+      mode,
+      step,
+      images,
+      progressMsg,
+      progressPercent,
+      result,
+      saved,
+      error,
+    }));
+  }, [mode, step, images, progressMsg, progressPercent, result, saved, error]);
 
   const reset = () => {
+    sessionStorage.removeItem('scanner_mode');
+    sessionStorage.removeItem(SCANNER_SESSION_KEY);
     setMode('choose');
     setStep('capture');
     setImages([]);
     setProgressMsg('');
+    setProgressPercent(0);
     setResult(null);
     setSaved(false);
     setEditingItem(null);
     setError(null);
+    setOriginalDiscounts(new Map());
   };
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

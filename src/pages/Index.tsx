@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSubscription } from '@/hooks/useSubscription';
 import { RenewalBanner } from '@/components/RenewalBanner';
@@ -17,9 +17,17 @@ import { TabId } from '@/types';
 
 const Index = () => {
   const { info } = useSubscription();
-  const [activeTab, setActiveTab] = useState<TabId>('home');
+  const [activeTab, setActiveTab] = useState<TabId>(() => {
+    const savedTab = sessionStorage.getItem('active_tab');
+    const validTabs: TabId[] = ['home', 'lists', 'stock', 'savings', 'history', 'reports', 'scanner', 'shopping', 'share'];
+    return validTabs.includes(savedTab as TabId) ? (savedTab as TabId) : 'home';
+  });
   const [menuOpen, setMenuOpen] = useState(false);
   const [historyFilter, setHistoryFilter] = useState<{ date?: string; store?: string }>({});
+
+  useEffect(() => {
+    sessionStorage.setItem('active_tab', activeTab);
+  }, [activeTab]);
 
   const goHome = () => setActiveTab('home');
 

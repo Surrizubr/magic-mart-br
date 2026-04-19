@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/PageHeader';
@@ -37,28 +37,6 @@ interface AIReceiptResult {
   notes?: string;
 }
 
-interface PersistedScannerState {
-  mode: ScanMode;
-  step: ScanStep;
-  images: string[];
-  progressMsg: string;
-  progressPercent: number;
-  result: AIReceiptResult | null;
-  saved: boolean;
-  error: string | null;
-}
-
-const SCANNER_SESSION_KEY = 'scanner_session';
-
-function getStoredScannerState(): Partial<PersistedScannerState> {
-  try {
-    const raw = sessionStorage.getItem(SCANNER_SESSION_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
 interface ScannerPageProps {
   onBack?: () => void;
   onNavigateToHistory?: (date: string, store: string) => void;
@@ -67,89 +45,48 @@ interface ScannerPageProps {
 
 export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: ScannerPageProps) {
   const { currency, formatCurrency: fc, t } = useLanguage();
-  const storedStateRef = useRef<Partial<PersistedScannerState>>(getStoredScannerState());
-  const storedState = storedStateRef.current;
-  const [mode, setMode] = useState<ScanMode>(() => (storedState.mode as ScanMode) || (sessionStorage.getItem('scanner_mode') as ScanMode) || 'choose');
-  const [step, setStep] = useState<ScanStep>(() => (storedState.step as ScanStep) || 'capture');
-  const [images, setImages] = useState<string[]>(() => storedState.images || []);
-  const [progressMsg, setProgressMsg] = useState(() => storedState.progressMsg || '');
-  const [progressPercent, setProgressPercent] = useState(() => storedState.progressPercent || 0);
+  const [mode, setMode] = useState<ScanMode>('choose');
+  const [step, setStep] = useState<ScanStep>('capture');
+  const [images, setImages] = useState<string[]>([]);
+  const [progressMsg, setProgressMsg] = useState('');
+  const [progressPercent, setProgressPercent] = useState(0);
   const [dateError, setDateError] = useState(false);
-  const [result, setResult] = useState<AIReceiptResult | null>(() => (storedState.result as AIReceiptResult | null) || null);
-  const [saved, setSaved] = useState(() => storedState.saved || false);
+  const [result, setResult] = useState<AIReceiptResult | null>(null);
+  const [saved, setSaved] = useState(false);
   const [editingItem, setEditingItem] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(() => storedState.error ?? null);
+  const [error, setError] = useState<string | null>(null);
   const [originalDiscounts, setOriginalDiscounts] = useState<Map<string, { discount_amount: number; discounted_price: number; discount: number }>>(new Map());
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const shouldResumeProcessingRef = useRef(
-    storedState.step === 'processing' && Array.isArray(storedState.images) && storedState.images.length > 0 && !storedState.result
-  );
-
-  useEffect(() => {
-    const shouldClearState = mode === 'choose' && step === 'capture' && images.length === 0 && !result && !error && !saved;
-
-    if (shouldClearState) {
-      sessionStorage.removeItem('scanner_mode');
-      sessionStorage.removeItem(SCANNER_SESSION_KEY);
-      return;
-    }
-
-    sessionStorage.setItem('scanner_mode', mode);
-    sessionStorage.setItem(SCANNER_SESSION_KEY, JSON.stringify({
-      mode,
-      step,
-      images,
-      progressMsg,
-      progressPercent,
-      result,
-      saved,
-      error,
-    }));
-  }, [mode, step, images, progressMsg, progressPercent, result, saved, error]);
 
   const reset = () => {
-    sessionStorage.removeItem('scanner_mode');
-    sessionStorage.removeItem(SCANNER_SESSION_KEY);
     setMode('choose');
     setStep('capture');
     setImages([]);
     setProgressMsg('');
-    setProgressPercent(0);
     setResult(null);
     setSaved(false);
     setEditingItem(null);
     setError(null);
-    setOriginalDiscounts(new Map());
   };
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    const fileArray = Array.from(files);
-    const readers = fileArray.map(file => {
-      return new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => resolve(ev.target?.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+    if (!files) return;
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        setImages(prev => {
+          const next = [...prev, dataUrl];
+          if (mode === 'single') {
+            processImages([dataUrl]);
+          }
+          return next;
+        });
+      };
+      reader.readAsDataURL(file);
     });
-
-    Promise.all(readers)
-      .then(dataUrls => {
-        setImages(prev => [...prev, ...dataUrls]);
-        // Auto-process in single mode
-        if (mode === 'single') {
-          processImages(dataUrls);
-        }
-      })
-      .catch(err => {
-        console.error('Erro ao ler arquivo:', err);
-        setError('Erro ao ler imagem. Tente novamente.');
-      });
-
     e.target.value = '';
   }, [mode]);
 
@@ -226,15 +163,6 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
       setStep('capture');
     }
   };
-
-  useEffect(() => {
-    if (!shouldResumeProcessingRef.current) return;
-    shouldResumeProcessingRef.current = false;
-
-    if (images.length > 0 && mode !== 'choose' && !result) {
-      void processImages(images);
-    }
-  }, [images, mode, result]);
 
   const handleSave = () => {
     if (!result) return;
@@ -994,14 +922,13 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
       />
 
       <input
-        id="scanner-file-input"
         ref={fileInputRef}
         type="file"
         accept="image/*"
         capture="environment"
         multiple={mode === 'multi'}
         onChange={handleFileSelect}
-        className="sr-only"
+        className="hidden"
       />
 
       <div className="p-4 space-y-4">
@@ -1055,9 +982,9 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
 
         {/* Capture buttons */}
         <div className="space-y-3">
-          <label
-            htmlFor="scanner-file-input"
-            className="w-full bg-card rounded-lg shadow-card p-8 flex flex-col items-center gap-3 border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors cursor-pointer"
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full bg-card rounded-lg shadow-card p-8 flex flex-col items-center gap-3 border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors"
           >
             <div className="w-16 h-16 rounded-full gradient-primary flex items-center justify-center">
               <Camera className="w-8 h-8 text-primary-foreground" />
@@ -1070,7 +997,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                 Toque para tirar foto ou selecionar da galeria
               </p>
             </div>
-          </label>
+          </button>
 
           {mode === 'multi' && (
             <div className="bg-accent/50 rounded-lg p-3 space-y-1.5">

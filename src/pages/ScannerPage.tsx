@@ -227,6 +227,15 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
     }
   };
 
+  useEffect(() => {
+    if (!shouldResumeProcessingRef.current) return;
+    shouldResumeProcessingRef.current = false;
+
+    if (images.length > 0 && mode !== 'choose' && !result) {
+      void processImages(images);
+    }
+  }, [images, mode, result]);
+
   const handleSave = () => {
     if (!result) return;
     
@@ -985,13 +994,14 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
       />
 
       <input
+        id="scanner-file-input"
         ref={fileInputRef}
         type="file"
         accept="image/*"
         capture="environment"
         multiple={mode === 'multi'}
         onChange={handleFileSelect}
-        className="hidden"
+        className="sr-only"
       />
 
       <div className="p-4 space-y-4">
@@ -1045,9 +1055,9 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
 
         {/* Capture buttons */}
         <div className="space-y-3">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full bg-card rounded-lg shadow-card p-8 flex flex-col items-center gap-3 border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors"
+          <label
+            htmlFor="scanner-file-input"
+            className="w-full bg-card rounded-lg shadow-card p-8 flex flex-col items-center gap-3 border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors cursor-pointer"
           >
             <div className="w-16 h-16 rounded-full gradient-primary flex items-center justify-center">
               <Camera className="w-8 h-8 text-primary-foreground" />
@@ -1060,7 +1070,7 @@ export function ScannerPage({ onBack, onNavigateToHistory, onOpenMenu }: Scanner
                 Toque para tirar foto ou selecionar da galeria
               </p>
             </div>
-          </button>
+          </label>
 
           {mode === 'multi' && (
             <div className="bg-accent/50 rounded-lg p-3 space-y-1.5">

@@ -142,6 +142,9 @@ Você DEVE:
       if (response.status === 429) {
         return respond(false, { error: "Limite de requisições excedido. Tente novamente em alguns instantes." });
       }
+      if (response.status === 400 && errText.includes("API_KEY_INVALID")) {
+        return respond(false, { error: "Chave API Gemini inválida. Verifique nas configurações." });
+      }
       if (response.status === 401 || response.status === 403) {
         return respond(false, { error: "Chave API Gemini inválida. Verifique nas configurações." });
       }
